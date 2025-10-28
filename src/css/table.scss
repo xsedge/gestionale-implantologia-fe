@@ -1,0 +1,40 @@
+// src/css/tables.scss
+
+.client-table-container {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--q-color-grey-3, #e0e0e0);
+}
+
+.client-table-header {
+  font-size: 1.15rem;
+  padding: 18px 20px;
+  color: var(--q-color-pink-9, #1a237e);
+  background-color: var(--q-color-pink-1, #e8eaf6);
+}
+
+.client-table-row {
+  transition: background-color 0.3s ease;
+}
+.client-table-row:nth-child(even) {
+  background-color: var(--q-color-grey-1, #f5f5f5);
+}
+.client-table-row:hover {
+  background-color: var(--q-color-blue-grey-1, #e0f7fa) !important;
+  cursor: pointer;
+}
+
+.client-table-cell {
+  font-size: 1.05rem;
+  padding: 16px 20px;
+}
+
+.table-filter-input {
+  .q-field__control {
+    height: 56px;
+  }
+  .q-field__label {
+    font-size: 1.1rem;
+    top: 18px;
+  }
+}
