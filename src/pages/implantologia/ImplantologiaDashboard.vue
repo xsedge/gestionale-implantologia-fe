@@ -30,6 +30,7 @@ const router = useRouter()
 const sections = [
   { label: 'Prodotti', route: '/implantologia/prodotti', icon: 'inventory_2', description: 'Catalogo prodotti con quantità e scheda impianto.' },
   { label: 'Fornitori', route: '/implantologia/fornitori', icon: 'local_shipping', description: 'Anagrafica dei fornitori e contatti principali.' },
+  { label: 'Clienti dentali', route: '/implantologia/clienti', icon: 'groups', description: 'Schede pazienti e riferimenti clinici.' },
   { label: 'Acquisti', route: '/implantologia/acquisti', icon: 'shopping_cart', description: 'Ordini di acquisto con stato e totale.' },
   { label: 'Vendite', route: '/implantologia/vendite', icon: 'point_of_sale', description: 'Vendite implantari e stato pagamento.' },
   { label: 'Magazzino', route: '/implantologia/magazzino', icon: 'warehouse', description: 'Movimenti di magazzino e giacenze aggiornate.' },
