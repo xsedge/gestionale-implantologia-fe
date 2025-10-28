@@ -2,6 +2,7 @@ import MainPage from 'src/components/pages/MainPage.vue'
 import ImplantologiaDashboard from 'src/pages/implantologia/ImplantologiaDashboard.vue'
 import ImplantologiaProdottiList from 'src/pages/implantologia/ProdottiList.vue'
 import ImplantologiaFornitoriList from 'src/pages/implantologia/FornitoriList.vue'
+import ImplantologiaClientiList from 'src/pages/implantologia/ClientiList.vue'
 import ImplantologiaAcquistiList from 'src/pages/implantologia/AcquistiList.vue'
 import ImplantologiaVenditeList from 'src/pages/implantologia/VenditeList.vue'
 import ImplantologiaMagazzinoList from 'src/pages/implantologia/MagazzinoList.vue'
@@ -24,6 +25,10 @@ const routes = [
   {
     path: '/implantologia/fornitori',
     component: ImplantologiaFornitoriList,
+  },
+  {
+    path: '/implantologia/clienti',
+    component: ImplantologiaClientiList,
   },
   {
     path: '/implantologia/acquisti',

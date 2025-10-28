@@ -22,6 +22,3 @@ export function deleteFattura(id) {
   return http.delete(`${BASE_URL}/${id}`)
 }
 
-export function generaPdf(id) {
-  return http.get(`${BASE_URL}/${id}/pdf`, { responseType: 'blob' })
-}

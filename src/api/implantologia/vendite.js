@@ -21,7 +21,3 @@ export function updateVendita(id, payload) {
 export function deleteVendita(id) {
   return http.delete(`${BASE_URL}/${id}`)
 }
-
-export function aggiornaStatoPagamento(id, stato) {
-  return http.patch(`${BASE_URL}/${id}/stato-pagamento`, { statoPagamento: stato })
-}

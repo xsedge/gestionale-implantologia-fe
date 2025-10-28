@@ -26,8 +26,14 @@
       <q-card-section>
         <q-table :rows="filteredFatture" :columns="columns" row-key="id" flat bordered :loading="store.loading"
           no-data-label="Nessuna fattura presente" rows-per-page-label="Fatture per pagina" :pagination="pagination">
-          <template #body-cell-importoTotale="props">
-            <q-td :props="props">{{ formatCurrency(props.row.importoTotale) }}</q-td>
+          <template #body-cell-totale="props">
+            <q-td :props="props">{{ formatCurrency(props.row.totale) }}</q-td>
+          </template>
+          <template #body-cell-imponibile="props">
+            <q-td :props="props">{{ formatCurrency(props.row.imponibile) }}</q-td>
+          </template>
+          <template #body-cell-iva="props">
+            <q-td :props="props">{{ formatCurrency(props.row.iva) }}</q-td>
           </template>
           <template #body-cell-collegamenti="props">
             <q-td :props="props">
@@ -40,7 +46,6 @@
           </template>
           <template #body-cell-azioni="props">
             <q-td :props="props" class="q-gutter-xs">
-              <q-btn dense flat round icon="picture_as_pdf" color="secondary" @click="generaPdf(props.row)" />
               <q-btn dense flat round icon="edit" color="primary" @click="openEdit(props.row)" />
               <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(props.row)" />
             </q-td>
@@ -79,8 +84,7 @@ const filters = reactive({
 
 const statiFattura = [
   { label: 'Pagata', value: 'PAGATA' },
-  { label: 'In attesa', value: 'IN_ATTESA' },
-  { label: 'Annullata', value: 'ANNULLATA' }
+  { label: 'In attesa', value: 'IN_ATTESA' }
 ]
 
 const modal = reactive({
@@ -92,11 +96,13 @@ const modal = reactive({
 const columns = [
   { name: 'numero', label: 'Numero', align: 'left', field: 'numero', sortable: true },
   { name: 'data', label: 'Data', align: 'left', field: row => formatDate(row.data), sortable: true },
-  { name: 'stato', label: 'Stato', align: 'left', field: 'stato' },
   { name: 'tipo', label: 'Tipo', align: 'left', field: 'tipo' },
+  { name: 'stato', label: 'Stato', align: 'left', field: 'stato' },
+  { name: 'totale', label: 'Totale', align: 'right', field: 'totale' },
+  { name: 'imponibile', label: 'Imponibile', align: 'right', field: 'imponibile' },
+  { name: 'iva', label: 'IVA', align: 'right', field: 'iva' },
   { name: 'cliente', label: 'Cliente', align: 'left', field: row => getClienteNome(row.clienteDentaleId) },
   { name: 'fornitore', label: 'Fornitore', align: 'left', field: row => getFornitoreNome(row.fornitoreId) },
-  { name: 'importoTotale', label: 'Importo', align: 'right', field: 'importoTotale' },
   { name: 'collegamenti', label: 'Collegamenti', align: 'left', field: row => row.venditaId || row.acquistoId },
   { name: 'azioni', label: 'Azioni', align: 'center', field: 'id' }
 ]
@@ -117,6 +123,7 @@ const filteredFatture = computed(() => {
     const matchesSearch = !search
       || fattura.numero?.toLowerCase().includes(search)
       || getClienteNome(fattura.clienteDentaleId).toLowerCase().includes(search)
+      || getFornitoreNome(fattura.fornitoreId).toLowerCase().includes(search)
     const matchesStato = !filters.stato || fattura.stato === filters.stato
     return matchesSearch && matchesStato
   })
@@ -177,15 +184,6 @@ async function handleSave(payload) {
     console.error(error)
   } finally {
     modal.loading = false
-  }
-}
-
-async function generaPdf(item) {
-  try {
-    await store.downloadPdf(item.id)
-    $q.notify({ type: 'info', message: 'Placeholder PDF generato' })
-  } catch (error) {
-    console.error(error)
   }
 }
 

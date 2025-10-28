@@ -69,6 +69,12 @@ const cards = [
     description: 'Configura anagrafiche e relazioni con i fornitori',
   },
   {
+    title: 'Clienti dentali',
+    route: '/implantologia/clienti',
+    icon: 'groups',
+    description: 'Gestisci i dati dei pazienti e gli studi di riferimento',
+  },
+  {
     title: 'Acquisti',
     route: '/implantologia/acquisti',
     icon: 'shopping_cart',

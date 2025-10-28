@@ -37,3 +37,108 @@
     top: 18px;
   }
 }
+
+.implantologia-modal {
+  width: min(920px, calc(100vw - 32px));
+  max-width: 920px;
+  min-width: 0;
+}
+
+.implantologia-modal--large {
+  max-width: 960px;
+}
+
+.implantologia-modal--medium {
+  max-width: 820px;
+}
+
+.implantologia-modal--small {
+  max-width: 680px;
+}
+
+.implantologia-modal__header {
+  padding: 20px 24px;
+}
+
+.implantologia-modal__body {
+  padding: 20px 24px;
+}
+
+.implantologia-modal__actions {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.implantologia-form-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.implantologia-form-grid--compact {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.implantologia-form-grid--loose {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.implantologia-form-grid--line {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: end;
+}
+
+.implantologia-form-grid__full {
+  grid-column: 1 / -1;
+}
+
+.implantologia-form-grid__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+@media (max-width: 1023px) {
+  .implantologia-modal {
+    width: min(760px, calc(100vw - 24px));
+  }
+}
+
+@media (max-width: 767px) {
+  .implantologia-modal {
+    width: calc(100vw - 18px);
+  }
+
+  .implantologia-modal__header,
+  .implantologia-modal__body,
+  .implantologia-modal__actions {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .implantologia-modal__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .implantologia-modal__actions .q-btn {
+    width: 100%;
+  }
+
+  .implantologia-form-grid,
+  .implantologia-form-grid--compact,
+  .implantologia-form-grid--loose,
+  .implantologia-form-grid--line {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .implantologia-form-grid--line {
+    align-items: stretch;
+  }
+
+  .implantologia-form-grid__actions {
+    justify-content: flex-start;
+  }
+}

@@ -81,9 +81,8 @@ const filters = reactive({
 })
 
 const statiPagamento = [
-  { label: 'In attesa', value: 'IN_ATTESA' },
   { label: 'Pagato', value: 'PAGATO' },
-  { label: 'Parziale', value: 'PARZIALE' }
+  { label: 'Da pagare', value: 'DA_PAGARE' }
 ]
 
 const modal = reactive({
@@ -93,10 +92,17 @@ const modal = reactive({
 })
 
 const columns = [
-  { name: 'data', label: 'Data', align: 'left', field: row => formatDate(row.data), sortable: true },
-  { name: 'cliente', label: 'Cliente', align: 'left', field: row => row.clienteDentaleNome || row.cliente || '-' },
+  { name: 'numero', label: 'Numero', align: 'left', field: 'numero', sortable: true },
+  { name: 'dataIntervento', label: 'Data', align: 'left', field: row => formatDate(row.dataIntervento), sortable: true },
+  {
+    name: 'cliente',
+    label: 'Cliente',
+    align: 'left',
+    field: row => formatCliente(row)
+  },
+  { name: 'medico', label: 'Medico', align: 'left', field: 'medico' },
   { name: 'statoPagamento', label: 'Stato pagamento', align: 'left', field: 'statoPagamento' },
-  { name: 'totale', label: 'Totale', align: 'right', field: row => formatCurrency(row.totale || calcolaTotale(row)) },
+  { name: 'totale', label: 'Totale', align: 'right', field: row => formatCurrency(row.totale ?? calcolaTotale(row)) },
   { name: 'dettagli', label: 'Dettagli', align: 'left', field: 'dettagli' },
   { name: 'azioni', label: 'Azioni', align: 'center', field: 'id' }
 ]
@@ -113,11 +119,12 @@ const clientiOptions = computed(() => clientiStore.clienti.map(cliente => ({
 const filteredVendite = computed(() => {
   return store.vendite.filter(vendita => {
     const search = filters.search?.toLowerCase()
-    const clienteNome = (vendita.clienteDentaleNome || vendita.cliente || '').toLowerCase()
-    const matchesSearch = !search || clienteNome.includes(search)
+    const clienteNome = formatCliente(vendita).toLowerCase()
+    const matchesSearch = !search || clienteNome.includes(search) || vendita.numero?.toLowerCase().includes(search)
     const matchesStato = !filters.statoPagamento || vendita.statoPagamento === filters.statoPagamento
-    const matchesData = (!filters.dataInizio || new Date(vendita.data) >= new Date(filters.dataInizio))
-      && (!filters.dataFine || new Date(vendita.data) <= new Date(filters.dataFine))
+    const data = vendita.dataIntervento ? new Date(vendita.dataIntervento) : null
+    const matchesData = (!filters.dataInizio || (data && data >= new Date(filters.dataInizio)))
+      && (!filters.dataFine || (data && data <= new Date(filters.dataFine)))
     return matchesSearch && matchesStato && matchesData
   })
 })
@@ -146,6 +153,15 @@ function calcolaTotale(vendita) {
     return 0
   }
   return vendita.dettagli.reduce((sum, det) => sum + (Number(det.totaleRiga) || (Number(det.prezzoUnitario) || 0) * det.quantita), 0)
+}
+
+function formatCliente(vendita) {
+  if (!vendita) return '-'
+  const nominativo = [vendita.clienteDentaleNome, vendita.clienteDentaleCognome].filter(Boolean).join(' ').trim()
+  if (nominativo) {
+    return nominativo
+  }
+  return vendita.cliente || '-'
 }
 
 function openCreate() {
@@ -179,7 +195,7 @@ async function handleSave(payload) {
 function handleDelete(item) {
   $q.dialog({
     title: 'Elimina vendita',
-    message: `Confermi l'eliminazione della vendita del ${formatDate(item.data)}?`,
+    message: `Confermi l'eliminazione della vendita <strong>${item.numero || formatDate(item.dataIntervento)}</strong>?`,
     html: true,
     cancel: true,
     persistent: true

@@ -21,7 +21,3 @@ export function updateAcquisto(id, payload) {
 export function deleteAcquisto(id) {
   return http.delete(`${BASE_URL}/${id}`)
 }
-
-export function completaAcquisto(id) {
-  return http.post(`${BASE_URL}/${id}/completa`)
-}

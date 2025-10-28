@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { fetchMovimenti, createMovimento, fetchGiacenze } from 'src/api/implantologia/magazzino.js'
+import { fetchMovimenti, fetchGiacenze } from 'src/api/implantologia/magazzino.js'
 
 function extractList(response) {
   if (!response) {
@@ -49,13 +49,6 @@ export const useImplantologiaMagazzinoStore = defineStore('implantologiaMagazzin
       } finally {
         this.loading = false
       }
-    },
-    async createMovimento(payload) {
-      this.error = null
-      const result = await createMovimento(payload)
-      await this.fetchMovimenti()
-      await this.fetchGiacenze()
-      return result
     },
     async fetchGiacenze() {
       try {
