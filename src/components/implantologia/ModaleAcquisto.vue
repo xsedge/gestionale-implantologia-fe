@@ -1,37 +1,27 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="val => emit('update:modelValue', val)" persistent>
-    <q-card style="width: 95vw; max-width: 900px;">
+    <q-card class="implantologia-modal implantologia-modal--large">
       <q-form ref="formRef" @submit.prevent="onSubmit">
-        <q-card-section class="bg-primary text-white">
+        <q-card-section class="bg-primary text-white implantologia-modal__header">
           <div class="text-h6 text-weight-medium">{{ titolo }}</div>
           <div class="text-subtitle2 text-white">Registra i movimenti di acquisto dai fornitori.</div>
         </q-card-section>
 
-        <q-card-section>
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-4">
-              <q-input v-model="form.numero" label="Numero" dense outlined :rules="requiredRule" />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-input v-model="form.dataAcquisto" type="date" label="Data acquisto" dense outlined :rules="requiredRule" />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-select v-model="form.fornitoreId" :options="fornitoriOptions" label="Fornitore" dense outlined emit-value
-                map-options option-label="nome" option-value="id" :rules="requiredRule" />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-select v-model="form.stato" :options="statiAcquisto" label="Stato" dense outlined emit-value map-options
-                :rules="requiredRule" />
-            </div>
-            <div class="col-12">
-              <q-input v-model="form.note" label="Note" type="textarea" outlined dense autogrow />
-            </div>
+        <q-card-section class="implantologia-modal__body">
+          <div class="implantologia-form-grid implantologia-form-grid--loose">
+            <q-input v-model="form.numero" label="Numero" dense outlined :rules="requiredRule" />
+            <q-input v-model="form.dataAcquisto" type="date" label="Data acquisto" dense outlined :rules="requiredRule" />
+            <q-select v-model="form.fornitoreId" :options="fornitoriOptions" label="Fornitore" dense outlined emit-value
+              map-options option-label="nome" option-value="id" :rules="requiredRule" />
+            <q-select v-model="form.stato" :options="statiAcquisto" label="Stato" dense outlined emit-value map-options
+              :rules="requiredRule" />
+            <q-input v-model="form.note" label="Note" type="textarea" outlined dense autogrow class="implantologia-form-grid__full" />
           </div>
         </q-card-section>
 
         <q-separator />
 
-        <q-card-section>
+        <q-card-section class="implantologia-modal__body">
           <div class="row items-center justify-between q-mb-md">
             <div class="text-subtitle1 text-weight-medium">Prodotti acquistati</div>
             <q-btn color="primary" icon="add" label="Aggiungi prodotto" flat dense @click="aggiungiRiga" />
@@ -43,23 +33,15 @@
 
           <div v-else class="column q-gutter-md">
             <q-card v-for="(riga, index) in form.prodotti" :key="`acquisto-${index}`" flat bordered class="q-pa-md">
-              <div class="row q-col-gutter-md items-start">
-                <div class="col-12 col-md-4">
-                  <q-select v-model="riga.prodottoId" :options="prodottiOptions" option-label="nome"
-                    option-value="id" emit-value map-options label="Prodotto" dense outlined use-input input-debounce="200"
-                    @filter="(val, update) => filtraProdotti(val, update)" :rules="requiredRule" />
-                </div>
-                <div class="col-12 col-md-2">
-                  <q-input v-model.number="riga.quantita" type="number" label="Quantità" dense outlined :rules="requiredNumericRule" />
-                </div>
-                <div class="col-12 col-md-3">
-                  <q-select v-model="riga.listinoId" :options="listiniOptions" option-label="nome" option-value="id"
-                    emit-value map-options label="Listino" dense outlined clearable />
-                </div>
-                <div class="col-12 col-md-2">
-                  <q-input :model-value="formatCurrency(riga.prezzoUnitario)" label="Prezzo unitario" dense outlined readonly />
-                </div>
-                <div class="col-12 col-md-1 flex items-start justify-end">
+              <div class="implantologia-form-grid implantologia-form-grid--line">
+                <q-select v-model="riga.prodottoId" :options="prodottiOptions" option-label="nome"
+                  option-value="id" emit-value map-options label="Prodotto" dense outlined use-input input-debounce="200"
+                  @filter="(val, update) => filtraProdotti(val, update)" :rules="requiredRule" />
+                <q-input v-model.number="riga.quantita" type="number" label="Quantità" dense outlined :rules="requiredNumericRule" />
+                <q-select v-model="riga.listinoId" :options="listiniOptions" option-label="nome" option-value="id"
+                  emit-value map-options label="Listino" dense outlined clearable />
+                <q-input :model-value="formatCurrency(riga.prezzoUnitario)" label="Prezzo unitario" dense outlined readonly />
+                <div class="implantologia-form-grid__actions">
                   <q-btn flat dense color="negative" icon="delete" @click="rimuoviRiga(index)" />
                 </div>
               </div>
@@ -72,12 +54,12 @@
 
         <q-separator />
 
-        <q-card-section class="row justify-end items-center q-gutter-sm">
+        <q-card-section class="implantologia-modal__body row justify-end items-center q-gutter-sm">
           <div class="text-subtitle1 text-weight-medium">Totale ordine:</div>
           <div class="text-h6 text-primary">{{ formatCurrency(totale) }}</div>
         </q-card-section>
 
-        <q-card-actions align="right">
+        <q-card-actions class="implantologia-modal__actions">
           <q-btn flat label="Annulla" :disable="loading" @click="close" />
           <q-btn color="primary" label="Salva" type="submit" :loading="loading" />
         </q-card-actions>

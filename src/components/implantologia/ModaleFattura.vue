@@ -1,63 +1,37 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="val => emit('update:modelValue', val)" persistent>
-    <q-card style="min-width: 520px; max-width: 780px;">
+    <q-card class="implantologia-modal implantologia-modal--medium">
       <q-form ref="formRef" @submit.prevent="onSubmit">
-        <q-card-section class="bg-primary text-white">
+        <q-card-section class="bg-primary text-white implantologia-modal__header">
           <div class="text-h6 text-weight-medium">{{ titolo }}</div>
           <div class="text-subtitle2 text-white">Gestisci le fatture collegate ad acquisti e vendite.</div>
         </q-card-section>
 
-        <q-card-section>
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-4">
-              <q-input v-model="form.numero" label="Numero fattura" dense outlined :rules="requiredRule" />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-input v-model="form.data" type="date" label="Data" dense outlined :rules="requiredRule" />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-select v-model="form.tipo" :options="tipiFattura" label="Tipo" dense outlined emit-value map-options
-                :rules="requiredRule" />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-select v-model="form.stato" :options="statiFattura" label="Stato" dense outlined emit-value map-options
-                :rules="requiredRule" />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-input v-model.number="form.imponibile" type="number" label="Imponibile" dense outlined prefix="€" />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-input v-model.number="form.iva" type="number" label="IVA" dense outlined prefix="€" />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-select v-model="form.clienteDentaleId" :options="clientiOptions" option-label="label" option-value="id"
-                emit-value map-options label="Cliente dentale" dense outlined clearable />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-select v-model="form.fornitoreId" :options="fornitoriOptions" option-label="nome" option-value="id"
-                emit-value map-options label="Fornitore" dense outlined clearable />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-select v-model="form.venditaId" :options="venditeOptions" option-label="label" option-value="id" emit-value
-                map-options label="Vendita associata" dense outlined clearable />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-select v-model="form.acquistoId" :options="acquistiOptions" option-label="label" option-value="id"
-                emit-value map-options label="Acquisto associato" dense outlined clearable />
-            </div>
-            <div class="col-12 col-md-4">
-              <q-input v-model.number="form.totale" type="number" label="Totale" dense outlined prefix="€" />
-            </div>
-            <div class="col-12">
-              <q-input v-model="form.pdfPlaceholder" label="Placeholder PDF" type="textarea" dense outlined autogrow />
-            </div>
-            <div class="col-12">
-              <q-input v-model="form.note" label="Note" type="textarea" dense outlined autogrow />
-            </div>
+        <q-card-section class="implantologia-modal__body">
+          <div class="implantologia-form-grid implantologia-form-grid--loose">
+            <q-input v-model="form.numero" label="Numero fattura" dense outlined :rules="requiredRule" />
+            <q-input v-model="form.data" type="date" label="Data" dense outlined :rules="requiredRule" />
+            <q-select v-model="form.tipo" :options="tipiFattura" label="Tipo" dense outlined emit-value map-options
+              :rules="requiredRule" />
+            <q-select v-model="form.stato" :options="statiFattura" label="Stato" dense outlined emit-value map-options
+              :rules="requiredRule" />
+            <q-input v-model.number="form.imponibile" type="number" label="Imponibile" dense outlined prefix="€" />
+            <q-input v-model.number="form.iva" type="number" label="IVA" dense outlined prefix="€" />
+            <q-input v-model.number="form.totale" type="number" label="Totale" dense outlined prefix="€" />
+            <q-select v-model="form.clienteDentaleId" :options="clientiOptions" option-label="label" option-value="id"
+              emit-value map-options label="Cliente dentale" dense outlined clearable />
+            <q-select v-model="form.fornitoreId" :options="fornitoriOptions" option-label="nome" option-value="id"
+              emit-value map-options label="Fornitore" dense outlined clearable />
+            <q-select v-model="form.venditaId" :options="venditeOptions" option-label="label" option-value="id" emit-value
+              map-options label="Vendita associata" dense outlined clearable />
+            <q-select v-model="form.acquistoId" :options="acquistiOptions" option-label="label" option-value="id"
+              emit-value map-options label="Acquisto associato" dense outlined clearable />
+            <q-input v-model="form.pdfPlaceholder" label="Placeholder PDF" type="textarea" dense outlined autogrow class="implantologia-form-grid__full" />
+            <q-input v-model="form.note" label="Note" type="textarea" dense outlined autogrow class="implantologia-form-grid__full" />
           </div>
         </q-card-section>
 
-        <q-card-actions align="right">
+        <q-card-actions class="implantologia-modal__actions">
           <q-btn flat label="Annulla" :disable="loading" @click="close" />
           <q-btn color="primary" label="Salva" type="submit" :loading="loading" />
         </q-card-actions>

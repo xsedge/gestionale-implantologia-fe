@@ -1,55 +1,28 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="val => emit('update:modelValue', val)" persistent>
-    <q-card style="min-width: 460px; max-width: 720px;">
+    <q-card class="implantologia-modal implantologia-modal--medium">
       <q-form ref="formRef" @submit.prevent="onSubmit">
-        <q-card-section class="bg-primary text-white">
+        <q-card-section class="bg-primary text-white implantologia-modal__header">
           <div class="text-h6 text-weight-medium">{{ titolo }}</div>
           <div class="text-subtitle2 text-white">Gestisci i clienti dentali e i loro riferimenti.</div>
         </q-card-section>
 
-        <q-card-section class="q-gutter-md">
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-6">
-              <q-input v-model="form.nome" label="Nome" dense outlined :rules="requiredRule" />
-            </div>
-            <div class="col-12 col-md-6">
-              <q-input v-model="form.cognome" label="Cognome" dense outlined :rules="requiredRule" />
-            </div>
+        <q-card-section class="implantologia-modal__body">
+          <div class="implantologia-form-grid implantologia-form-grid--compact">
+            <q-input v-model="form.nome" label="Nome" dense outlined :rules="requiredRule" />
+            <q-input v-model="form.cognome" label="Cognome" dense outlined :rules="requiredRule" />
+            <q-input v-model="form.studioDentale" label="Studio dentale" dense outlined class="implantologia-form-grid__full" />
+            <q-input v-model="form.codiceFiscale" label="Codice fiscale" dense outlined />
+            <q-input v-model="form.email" label="Email" type="email" dense outlined />
+            <q-input v-model="form.telefono" label="Telefono" dense outlined />
+            <q-input v-model="form.indirizzo" label="Indirizzo" dense outlined />
+            <q-input v-model="form.citta" label="Città" dense outlined />
+            <q-input v-model="form.cap" label="CAP" dense outlined />
+            <q-input v-model="form.note" label="Note" type="textarea" dense outlined autogrow class="implantologia-form-grid__full" />
           </div>
-
-          <q-input v-model="form.studioDentale" label="Studio dentale" dense outlined />
-
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-6">
-              <q-input v-model="form.codiceFiscale" label="Codice fiscale" dense outlined />
-            </div>
-            <div class="col-12 col-md-6">
-              <q-input v-model="form.email" label="Email" type="email" dense outlined />
-            </div>
-          </div>
-
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-6">
-              <q-input v-model="form.telefono" label="Telefono" dense outlined />
-            </div>
-            <div class="col-12 col-md-6">
-              <q-input v-model="form.indirizzo" label="Indirizzo" dense outlined />
-            </div>
-          </div>
-
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-6">
-              <q-input v-model="form.citta" label="Città" dense outlined />
-            </div>
-            <div class="col-12 col-md-6">
-              <q-input v-model="form.cap" label="CAP" dense outlined />
-            </div>
-          </div>
-
-          <q-input v-model="form.note" label="Note" type="textarea" dense outlined autogrow />
         </q-card-section>
 
-        <q-card-actions align="right">
+        <q-card-actions class="implantologia-modal__actions">
           <q-btn flat label="Annulla" @click="close" :disable="loading" />
           <q-btn color="primary" label="Salva" type="submit" :loading="loading" />
         </q-card-actions>
