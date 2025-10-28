@@ -80,7 +80,8 @@ const filters = reactive({
 
 const statiAcquisto = [
   { label: 'In corso', value: 'IN_CORSO' },
-  { label: 'Completato', value: 'COMPLETATO' }
+  { label: 'Completato', value: 'COMPLETATO' },
+  { label: 'Annullato', value: 'ANNULLATO' }
 ]
 
 const modal = reactive({
@@ -90,10 +91,11 @@ const modal = reactive({
 })
 
 const columns = [
-  { name: 'data', label: 'Data', align: 'left', field: row => formatDate(row.data), sortable: true },
-  { name: 'fornitore', label: 'Fornitore', align: 'left', field: row => getFornitoreNome(row.fornitoreId) },
+  { name: 'numero', label: 'Numero', align: 'left', field: 'numero', sortable: true },
+  { name: 'dataAcquisto', label: 'Data', align: 'left', field: row => formatDate(row.dataAcquisto), sortable: true },
+  { name: 'fornitore', label: 'Fornitore', align: 'left', field: row => getFornitoreNome(row) },
   { name: 'stato', label: 'Stato', align: 'left', field: 'stato' },
-  { name: 'totale', label: 'Totale', align: 'right', field: row => formatCurrency(row.totale || calcolaTotale(row)) },
+  { name: 'totale', label: 'Totale', align: 'right', field: row => formatCurrency(row.totale ?? calcolaTotale(row)) },
   { name: 'dettagli', label: 'Dettagli', align: 'left', field: 'dettagli' },
   { name: 'azioni', label: 'Azioni', align: 'center', field: 'id' }
 ]
@@ -107,10 +109,13 @@ const listiniOptions = computed(() => listiniStore.listini)
 const filteredAcquisti = computed(() => {
   return store.acquisti.filter(acquisto => {
     const search = filters.search?.toLowerCase()
-    const matchesSearch = !search || getFornitoreNome(acquisto.fornitoreId).toLowerCase().includes(search)
+    const matchesSearch = !search
+      || getFornitoreNome(acquisto).toLowerCase().includes(search)
+      || acquisto.numero?.toLowerCase().includes(search)
     const matchesStato = !filters.stato || acquisto.stato === filters.stato
-    const matchesData = (!filters.dataInizio || new Date(acquisto.data) >= new Date(filters.dataInizio))
-      && (!filters.dataFine || new Date(acquisto.data) <= new Date(filters.dataFine))
+    const data = acquisto.dataAcquisto ? new Date(acquisto.dataAcquisto) : null
+    const matchesData = (!filters.dataInizio || (data && data >= new Date(filters.dataInizio)))
+      && (!filters.dataFine || (data && data <= new Date(filters.dataFine)))
     return matchesSearch && matchesStato && matchesData
   })
 })
@@ -134,7 +139,12 @@ function formatCurrency(value) {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(Number(value) || 0)
 }
 
-function getFornitoreNome(id) {
+function getFornitoreNome(acquisto) {
+  if (!acquisto) return '-'
+  if (acquisto.fornitoreNome) {
+    return acquisto.fornitoreNome
+  }
+  const id = typeof acquisto === 'object' ? acquisto.fornitoreId : acquisto
   return fornitoriStore.fornitori.find(f => f.id === id)?.nome || '-'
 }
 
@@ -176,7 +186,7 @@ async function handleSave(payload) {
 function handleDelete(item) {
   $q.dialog({
     title: 'Elimina acquisto',
-    message: `Confermi l'eliminazione dell'acquisto del ${formatDate(item.data)}?`,
+    message: `Confermi l'eliminazione dell'acquisto <strong>${item.numero || formatDate(item.dataAcquisto)}</strong>?`,
     html: true,
     cancel: true,
     persistent: true

@@ -47,6 +47,9 @@
                 <div><strong>Lotto:</strong> {{ props.row.schedaImpianto.lotto || '-' }}</div>
                 <div><strong>Materiale:</strong> {{ props.row.schedaImpianto.materiale || '-' }}</div>
                 <div><strong>Scadenza:</strong> {{ formatDate(props.row.schedaImpianto.dataScadenza) }}</div>
+                <div><strong>Posizionamento:</strong> {{ formatDate(props.row.schedaImpianto.dataPosizionamento) }}</div>
+                <div><strong>Arcata:</strong> {{ props.row.schedaImpianto.arcata || '-' }} ·
+                  {{ props.row.schedaImpianto.posizione || '-' }}</div>
               </div>
               <span v-else class="text-grey-6">-</span>
             </q-td>
@@ -64,7 +67,7 @@
 
     <ModaleProdotto v-model="modal.visible" :loading="modal.loading" :item="modal.item"
       :categoria-options="categoriaOptions" :fornitori-options="fornitoriOptions" :listini-options="listiniOptions"
-      @salva="handleSave" />
+      :clienti-options="clientiOptions" @salva="handleSave" />
   </q-page>
 </template>
 
@@ -74,12 +77,14 @@ import { useQuasar } from 'quasar'
 import { useImplantologiaProdottiStore } from 'src/stores/implantologiaProdottiStore.js'
 import { useImplantologiaFornitoriStore } from 'src/stores/implantologiaFornitoriStore.js'
 import { useImplantologiaListiniStore } from 'src/stores/implantologiaListiniStore.js'
+import { useImplantologiaClientiStore } from 'src/stores/implantologiaClientiStore.js'
 import ModaleProdotto from 'src/components/implantologia/ModaleProdotto.vue'
 
 const $q = useQuasar()
 const store = useImplantologiaProdottiStore()
 const fornitoriStore = useImplantologiaFornitoriStore()
 const listiniStore = useImplantologiaListiniStore()
+const clientiStore = useImplantologiaClientiStore()
 
 const filters = reactive({
   search: '',
@@ -100,8 +105,12 @@ const columns = [
   { name: 'fornitore', label: 'Fornitore', align: 'left', field: row => getFornitoreNome(row.fornitoreId) },
   { name: 'quantitaDisponibile', label: 'Disponibilità', align: 'right', field: 'quantitaDisponibile', sortable: true },
   { name: 'prezzoBase', label: 'Prezzo base', align: 'right', field: row => formatCurrency(row.prezzoBase) },
+  { name: 'diametro', label: 'Diametro (mm)', align: 'right', field: 'diametroMillimetri' },
+  { name: 'lunghezza', label: 'Lunghezza (mm)', align: 'right', field: 'lunghezzaMillimetri' },
+  { name: 'connessione', label: 'Connessione', align: 'left', field: 'connessione' },
   { name: 'listini', label: 'Listini', align: 'left', field: 'listinoIds' },
   { name: 'scheda', label: 'Scheda impianto', align: 'left', field: 'schedaImpianto' },
+  { name: 'note', label: 'Note', align: 'left', field: 'note' },
   { name: 'azioni', label: 'Azioni', align: 'center', field: 'id' }
 ]
 
@@ -110,11 +119,15 @@ const pagination = ref({ rowsPerPage: 10 })
 const categoriaOptions = computed(() => store.categorie.map(cat => ({ label: cat.descrizione || cat, value: cat.codice || cat })))
 const fornitoriOptions = computed(() => fornitoriStore.fornitori)
 const listiniOptions = computed(() => listiniStore.listini)
+const clientiOptions = computed(() => clientiStore.clienti.map(cliente => ({
+  id: cliente.id,
+  label: `${cliente.nome} ${cliente.cognome}`.trim()
+})))
 
 const filteredProdotti = computed(() => {
   return store.prodotti.filter(prodotto => {
     const matchesSearch = !filters.search
-      || [prodotto.nome, prodotto.codice].some(val => val?.toLowerCase().includes(filters.search.toLowerCase()))
+      || [prodotto.nome, prodotto.codice, prodotto.note].some(val => val?.toLowerCase().includes(filters.search.toLowerCase()))
     const matchesCategoria = !filters.categoria || prodotto.categoria === filters.categoria
     const matchesFornitore = !filters.fornitoreId || prodotto.fornitoreId === filters.fornitoreId
     return matchesSearch && matchesCategoria && matchesFornitore
@@ -126,7 +139,8 @@ onMounted(async () => {
     store.fetchAll(),
     store.fetchCategorie(),
     fornitoriStore.fetchAll(),
-    listiniStore.fetchAll()
+    listiniStore.fetchAll(),
+    clientiStore.fetchAll()
   ])
 })
 

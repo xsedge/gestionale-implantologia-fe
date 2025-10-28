@@ -24,7 +24,10 @@
                 :rules="requiredRule" />
             </div>
             <div class="col-12 col-md-4">
-              <q-input v-model.number="form.importoTotale" type="number" label="Importo totale" dense outlined prefix="€" />
+              <q-input v-model.number="form.imponibile" type="number" label="Imponibile" dense outlined prefix="€" />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input v-model.number="form.iva" type="number" label="IVA" dense outlined prefix="€" />
             </div>
             <div class="col-12 col-md-4">
               <q-select v-model="form.clienteDentaleId" :options="clientiOptions" option-label="label" option-value="id"
@@ -42,8 +45,14 @@
               <q-select v-model="form.acquistoId" :options="acquistiOptions" option-label="label" option-value="id"
                 emit-value map-options label="Acquisto associato" dense outlined clearable />
             </div>
+            <div class="col-12 col-md-4">
+              <q-input v-model.number="form.totale" type="number" label="Totale" dense outlined prefix="€" />
+            </div>
             <div class="col-12">
               <q-input v-model="form.pdfPlaceholder" label="Placeholder PDF" type="textarea" dense outlined autogrow />
+            </div>
+            <div class="col-12">
+              <q-input v-model="form.note" label="Note" type="textarea" dense outlined autogrow />
             </div>
           </div>
         </q-card-section>
@@ -79,8 +88,7 @@ const tipiFattura = [
 
 const statiFattura = [
   { label: 'Pagata', value: 'PAGATA' },
-  { label: 'In attesa', value: 'IN_ATTESA' },
-  { label: 'Annullata', value: 'ANNULLATA' }
+  { label: 'In attesa', value: 'IN_ATTESA' }
 ]
 
 const emptyForm = () => ({
@@ -89,12 +97,15 @@ const emptyForm = () => ({
   data: '',
   tipo: 'VENDITA',
   stato: 'IN_ATTESA',
-  importoTotale: null,
+  imponibile: null,
+  iva: null,
+  totale: null,
   clienteDentaleId: null,
   fornitoreId: null,
   venditaId: null,
   acquistoId: null,
-  pdfPlaceholder: ''
+  pdfPlaceholder: '',
+  note: ''
 })
 
 const form = reactive(emptyForm())
@@ -125,12 +136,15 @@ async function onSubmit() {
     data: form.data,
     tipo: form.tipo,
     stato: form.stato,
-    importoTotale: form.importoTotale != null ? Number(form.importoTotale) : null,
+    imponibile: form.imponibile != null ? Number(form.imponibile) : null,
+    iva: form.iva != null ? Number(form.iva) : null,
+    totale: form.totale != null ? Number(form.totale) : null,
     clienteDentaleId: form.clienteDentaleId,
     fornitoreId: form.fornitoreId,
     venditaId: form.venditaId,
     acquistoId: form.acquistoId,
-    pdfPlaceholder: form.pdfPlaceholder
+    pdfPlaceholder: form.pdfPlaceholder,
+    note: form.note
   }
   emit('salva', payload)
 }

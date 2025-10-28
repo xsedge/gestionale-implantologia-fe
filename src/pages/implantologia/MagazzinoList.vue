@@ -17,9 +17,6 @@
               <q-select v-model="filters.categoria" :options="categoriaOptions" label="Categoria prodotto" dense outlined
                 clearable emit-value />
             </div>
-            <div class="col-12 col-md-4 text-right">
-              <q-btn color="primary" icon="add_circle" label="Nuovo movimento" rounded unelevated @click="openCreate" />
-            </div>
           </div>
         </q-card-section>
 
@@ -33,11 +30,6 @@
             </template>
             <template #body-cell-dataMovimento="props">
               <q-td :props="props">{{ formatDateTime(props.row.dataMovimento) }}</q-td>
-            </template>
-            <template #body-cell-azioni="props">
-              <q-td :props="props">
-                <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(props.row)" />
-              </q-td>
             </template>
           </q-table>
         </q-card-section>
@@ -55,19 +47,14 @@
       </q-card>
     </div>
 
-    <ModaleMagazzino v-model="modal.visible" :loading="modal.loading" :item="modal.item" :prodotti-options="prodottiOptions"
-      @salva="handleSave" />
   </q-page>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useQuasar } from 'quasar'
 import { useImplantologiaMagazzinoStore } from 'src/stores/implantologiaMagazzinoStore.js'
 import { useImplantologiaProdottiStore } from 'src/stores/implantologiaProdottiStore.js'
-import ModaleMagazzino from 'src/components/implantologia/ModaleMagazzino.vue'
 
-const $q = useQuasar()
 const store = useImplantologiaMagazzinoStore()
 const prodottiStore = useImplantologiaProdottiStore()
 
@@ -77,16 +64,10 @@ const filters = reactive({
 })
 
 const tipiMovimento = [
-  { label: 'Entrata', value: 'ENTRATA' },
-  { label: 'Uscita', value: 'USCITA' },
+  { label: 'Acquisto', value: 'ACQUISTO' },
+  { label: 'Vendita', value: 'VENDITA' },
   { label: 'Reso', value: 'RESO' }
 ]
-
-const modal = reactive({
-  visible: false,
-  loading: false,
-  item: null
-})
 
 const columns = [
   { name: 'dataMovimento', label: 'Data', align: 'left', field: 'dataMovimento', sortable: true },
@@ -95,8 +76,7 @@ const columns = [
   { name: 'categoria', label: 'Categoria', align: 'left', field: row => getCategoria(row.prodottoId) },
   { name: 'quantita', label: 'Quantità', align: 'right', field: 'quantita' },
   { name: 'prezzoUnitario', label: 'Prezzo unitario', align: 'right', field: 'prezzoUnitario' },
-  { name: 'note', label: 'Note', align: 'left', field: 'note' },
-  { name: 'azioni', label: 'Azioni', align: 'center', field: 'id' }
+  { name: 'note', label: 'Note', align: 'left', field: 'note' }
 ]
 
 const columnsGiacenze = [
@@ -108,7 +88,6 @@ const columnsGiacenze = [
 const pagination = ref({ rowsPerPage: 10 })
 const paginationGiacenze = ref({ rowsPerPage: 10 })
 
-const prodottiOptions = computed(() => prodottiStore.prodotti)
 const categoriaOptions = computed(() => {
   const categories = new Map()
   prodottiStore.prodotti.forEach(prodotto => {
@@ -148,36 +127,6 @@ function formatDateTime(value) {
 
 function getCategoria(prodottoId) {
   return prodottiStore.prodotti.find(prod => prod.id === prodottoId)?.categoria || '-'
-}
-
-function openCreate() {
-  modal.item = null
-  modal.visible = true
-}
-
-async function handleSave(payload) {
-  modal.loading = true
-  try {
-    await store.createMovimento(payload)
-    $q.notify({ type: 'positive', message: 'Movimento registrato' })
-    modal.visible = false
-  } catch (error) {
-    console.error(error)
-  } finally {
-    modal.loading = false
-  }
-}
-
-function handleDelete() {
-  $q.dialog({
-    title: 'Elimina movimento',
-    message: "Confermi l'eliminazione di questo movimento?",
-    cancel: true,
-    persistent: true
-  }).onOk(async () => {
-    // Gestione eliminazione non disponibile lato BE: notifico utente
-    $q.notify({ type: 'warning', message: "Eliminazione non supportata dall'API" })
-  })
 }
 </script>
 

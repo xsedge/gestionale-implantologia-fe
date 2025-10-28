@@ -3,8 +3,7 @@ import {
   fetchAcquisti,
   createAcquisto,
   updateAcquisto,
-  deleteAcquisto,
-  completaAcquisto
+  deleteAcquisto
 } from 'src/api/implantologia/acquisti.js'
 
 function extractList(response) {
@@ -60,12 +59,6 @@ export const useImplantologiaAcquistiStore = defineStore('implantologiaAcquisti'
       this.error = null
       await deleteAcquisto(id)
       await this.fetchAll()
-    },
-    async completa(id) {
-      this.error = null
-      const result = await completaAcquisto(id)
-      await this.fetchAll()
-      return result
     }
   }
 })

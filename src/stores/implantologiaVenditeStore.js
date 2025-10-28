@@ -3,8 +3,7 @@ import {
   fetchVendite,
   createVendita,
   updateVendita,
-  deleteVendita,
-  aggiornaStatoPagamento
+  deleteVendita
 } from 'src/api/implantologia/vendite.js'
 
 function extractList(response) {
@@ -60,12 +59,6 @@ export const useImplantologiaVenditeStore = defineStore('implantologiaVendite', 
       this.error = null
       await deleteVendita(id)
       await this.fetchAll()
-    },
-    async aggiornaStato(id, stato) {
-      this.error = null
-      const result = await aggiornaStatoPagamento(id, stato)
-      await this.fetchAll()
-      return result
     }
   }
 })

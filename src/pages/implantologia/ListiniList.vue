@@ -76,9 +76,12 @@ const modal = reactive({
 
 const columns = [
   { name: 'nome', label: 'Nome', align: 'left', field: 'nome', sortable: true },
+  { name: 'validoDal', label: 'Valido dal', align: 'left', field: row => formatDate(row.validoDal), sortable: true },
+  { name: 'validoAl', label: 'Valido al', align: 'left', field: row => formatDate(row.validoAl), sortable: true },
   { name: 'sconto', label: 'Sconto (%)', align: 'right', field: row => row.scontoPercentuale ?? 0 },
   { name: 'fornitore', label: 'Fornitore', align: 'left', field: row => getFornitoreNome(row.fornitoreId) },
   { name: 'prodotti', label: 'Prodotti', align: 'left', field: 'prodotti' },
+  { name: 'note', label: 'Note', align: 'left', field: 'note' },
   { name: 'azioni', label: 'Azioni', align: 'center', field: 'id' }
 ]
 
@@ -90,7 +93,9 @@ const prodottiOptions = computed(() => prodottiStore.prodotti)
 const filteredListini = computed(() => {
   return store.listini.filter(listino => {
     const search = filters.search?.toLowerCase()
-    const matchesSearch = !search || listino.nome?.toLowerCase().includes(search)
+    const matchesSearch = !search
+      || listino.nome?.toLowerCase().includes(search)
+      || listino.note?.toLowerCase().includes(search)
     const matchesFornitore = !filters.fornitoreId || listino.fornitoreId === filters.fornitoreId
     return matchesSearch && matchesFornitore
   })
@@ -103,6 +108,11 @@ onMounted(async () => {
 function formatCurrency(value) {
   if (value == null) return '-'
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(Number(value) || 0)
+}
+
+function formatDate(value) {
+  if (!value) return '-'
+  return new Intl.DateTimeFormat('it-IT').format(new Date(value))
 }
 
 function getFornitoreNome(id) {

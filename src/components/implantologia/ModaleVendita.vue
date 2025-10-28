@@ -10,7 +10,10 @@
         <q-card-section>
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-4">
-              <q-input v-model="form.data" type="date" label="Data" dense outlined :rules="requiredRule" />
+              <q-input v-model="form.numero" label="Numero" dense outlined :rules="requiredRule" />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input v-model="form.dataIntervento" type="date" label="Data intervento" dense outlined :rules="requiredRule" />
             </div>
             <div class="col-12 col-md-4">
               <q-select v-model="form.clienteDentaleId" :options="clientiOptions" option-label="label"
@@ -23,6 +26,12 @@
             </div>
             <div class="col-12">
               <q-input v-model="form.cliente" label="Descrizione cliente" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model="form.medico" label="Medico" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model="form.note" label="Note" dense outlined type="textarea" autogrow />
             </div>
           </div>
         </q-card-section>
@@ -55,8 +64,8 @@
                     emit-value map-options label="Listino" dense outlined clearable />
                 </div>
                 <div class="col-12 col-md-2">
-                  <q-input v-model.number="riga.prezzoUnitario" type="number" label="Prezzo unitario" dense outlined
-                    prefix="€" :rules="requiredNumericRule" />
+                  <q-input :model-value="formatCurrency(prezzoUnitario(riga))" label="Prezzo unitario" dense outlined
+                    readonly />
                 </div>
                 <div class="col-12 col-md-1 flex items-start justify-end">
                   <q-btn flat dense color="negative" icon="delete" @click="rimuoviRiga(index)" />
@@ -100,17 +109,19 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'salva'])
 
 const statiPagamento = [
-  { label: 'In attesa', value: 'IN_ATTESA' },
   { label: 'Pagato', value: 'PAGATO' },
-  { label: 'Parziale', value: 'PARZIALE' }
+  { label: 'Da pagare', value: 'DA_PAGARE' }
 ]
 
 const emptyForm = () => ({
   id: null,
-  data: '',
+  numero: '',
+  dataIntervento: '',
   cliente: '',
   clienteDentaleId: null,
-  statoPagamento: 'IN_ATTESA',
+  statoPagamento: 'DA_PAGARE',
+  medico: '',
+  note: '',
   prodotti: []
 })
 
@@ -131,14 +142,20 @@ watch(
         prodottoId: det.prodottoId,
         quantita: det.quantita,
         listinoId: det.listinoId || null,
-        prezzoUnitario: det.prezzoUnitario
+        prezzoUnitario: det.prezzoUnitario,
+        __initialized: true,
+        __lastProdottoId: det.prodottoId,
+        __lastListinoId: det.listinoId || null
       }))
     } else if (Array.isArray(valore?.prodotti)) {
       form.prodotti = valore.prodotti.map(det => ({
         prodottoId: det.prodottoId,
         quantita: det.quantita,
         listinoId: det.listinoId || null,
-        prezzoUnitario: det.prezzoUnitario || calcolaPrezzo(det.prodottoId)
+        prezzoUnitario: det.prezzoUnitario || calcolaPrezzo(det.prodottoId),
+        __initialized: false,
+        __lastProdottoId: det.prodottoId,
+        __lastListinoId: det.listinoId || null
       }))
     }
   },
@@ -169,15 +186,21 @@ function prodottiMap() {
 
 function calcolaPrezzo(prodottoId) {
   const prodotto = prodottiMap().get(prodottoId)
-  return prodotto?.prezzoListinoApplicato || prodotto?.prezzoBase || 0
+  if (!prodotto) {
+    return 0
+  }
+  if (prodotto.prezzoListinoApplicato != null) {
+    return Number(prodotto.prezzoListinoApplicato) || 0
+  }
+  return Number(prodotto.prezzoBase) || 0
 }
 
 function rigaTotale(riga) {
-  return (Number(riga.prezzoUnitario) || 0) * (Number(riga.quantita) || 0)
+  return prezzoUnitario(riga) * (Number(riga.quantita) || 0)
 }
 
 function aggiungiRiga() {
-  form.prodotti.push({ prodottoId: null, quantita: 1, listinoId: null, prezzoUnitario: 0 })
+  form.prodotti.push({ prodottoId: null, quantita: 1, listinoId: null, prezzoUnitario: 0, __initialized: false })
 }
 
 function rimuoviRiga(index) {
@@ -187,13 +210,29 @@ function rimuoviRiga(index) {
 watch(
   () => form.prodotti.map(r => [r.prodottoId, r.listinoId]),
   () => {
-    form.prodotti.forEach(riga => {
-      if (!riga.prezzoUnitario || !riga.prodottoId) {
-        riga.prezzoUnitario = calcolaPrezzo(riga.prodottoId)
-      }
-    })
+    form.prodotti.forEach(riga => aggiornaPrezzo(riga))
   }
 )
+
+function aggiornaPrezzo(riga) {
+  if (!riga || !riga.prodottoId) {
+    riga.prezzoUnitario = 0
+    riga.__lastProdottoId = null
+    return
+  }
+  const hasChanged = riga.__lastProdottoId !== riga.prodottoId || riga.__lastListinoId !== riga.listinoId
+  if (!hasChanged && riga.__initialized) {
+    return
+  }
+  riga.prezzoUnitario = calcolaPrezzo(riga.prodottoId)
+  riga.__lastProdottoId = riga.prodottoId
+  riga.__lastListinoId = riga.listinoId || null
+  riga.__initialized = true
+}
+
+function prezzoUnitario(riga) {
+  return Number(riga?.prezzoUnitario) || 0
+}
 
 function formatCurrency(value) {
   const number = Number(value || 0)
@@ -207,17 +246,19 @@ async function onSubmit() {
   }
   const payload = {
     id: form.id,
-    data: form.data,
+    numero: form.numero,
+    dataIntervento: form.dataIntervento,
     cliente: form.cliente,
     statoPagamento: form.statoPagamento,
     clienteDentaleId: form.clienteDentaleId,
+    medico: form.medico,
+    note: form.note,
     prodotti: form.prodotti
       .filter(riga => riga.prodottoId)
       .map(riga => ({
         prodottoId: riga.prodottoId,
         quantita: Number(riga.quantita) || 0,
-        listinoId: riga.listinoId || null,
-        prezzoUnitario: Number(riga.prezzoUnitario) || 0
+        listinoId: riga.listinoId || null
       }))
   }
   emit('salva', payload)

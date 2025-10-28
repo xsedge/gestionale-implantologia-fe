@@ -3,8 +3,7 @@ import {
   fetchFatture,
   createFattura,
   updateFattura,
-  deleteFattura,
-  generaPdf
+  deleteFattura
 } from 'src/api/implantologia/fatture.js'
 
 function extractList(response) {
@@ -60,9 +59,6 @@ export const useImplantologiaFattureStore = defineStore('implantologiaFatture', 
       this.error = null
       await deleteFattura(id)
       await this.fetchAll()
-    },
-    async downloadPdf(id) {
-      return generaPdf(id)
     }
   }
 })

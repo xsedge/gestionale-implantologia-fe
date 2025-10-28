@@ -31,9 +31,27 @@
               <q-select v-model="form.fornitoreId" :options="fornitoriOptions" label="Fornitore" dense outlined emit-value
                 map-options option-label="nome" option-value="id" :rules="requiredRule" />
             </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model.number="form.diametroMillimetri" label="Diametro (mm)" type="number" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model.number="form.lunghezzaMillimetri" label="Lunghezza (mm)" type="number" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model="form.connessione" label="Connessione" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model="form.superficie" label="Superficie" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model="form.materiale" label="Materiale" dense outlined />
+            </div>
             <div class="col-12">
               <q-select v-model="form.listinoIds" :options="listiniOptions" label="Listini associati" dense outlined emit-value
                 map-options option-label="nome" option-value="id" use-chips multiple />
+            </div>
+            <div class="col-12">
+              <q-input v-model="form.note" label="Note" type="textarea" dense outlined autogrow />
             </div>
           </div>
 
@@ -52,6 +70,22 @@
             </div>
             <div class="col-12 col-md-6">
               <q-input v-model="scheda.dataScadenza" label="Data scadenza" type="date" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model="scheda.dataPosizionamento" label="Data posizionamento" type="date" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model="scheda.arcata" label="Arcata" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model="scheda.posizione" label="Posizione" dense outlined />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-select v-model="scheda.clienteDentaleId" :options="props.clientiOptions" option-label="label" option-value="id"
+                emit-value map-options label="Cliente dentale" dense outlined clearable />
+            </div>
+            <div class="col-12">
+              <q-input v-model="scheda.note" label="Note scheda" type="textarea" dense outlined autogrow />
             </div>
           </div>
         </q-card-section>
@@ -74,7 +108,8 @@ const props = defineProps({
   item: { type: Object, default: null },
   categoriaOptions: { type: Array, default: () => [] },
   fornitoriOptions: { type: Array, default: () => [] },
-  listiniOptions: { type: Array, default: () => [] }
+  listiniOptions: { type: Array, default: () => [] },
+  clientiOptions: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['update:modelValue', 'salva'])
@@ -87,7 +122,13 @@ const emptyForm = () => ({
   prezzoBase: null,
   quantitaDisponibile: null,
   fornitoreId: null,
-  listinoIds: []
+  listinoIds: [],
+  diametroMillimetri: null,
+  lunghezzaMillimetri: null,
+  connessione: '',
+  superficie: '',
+  materiale: '',
+  note: ''
 })
 
 const emptyScheda = () => ({
@@ -95,7 +136,12 @@ const emptyScheda = () => ({
   lotto: '',
   compatibilita: '',
   materiale: '',
-  dataScadenza: ''
+  dataScadenza: '',
+  dataPosizionamento: '',
+  arcata: '',
+  posizione: '',
+  note: '',
+  clienteDentaleId: null
 })
 
 const form = reactive(emptyForm())
@@ -128,8 +174,25 @@ async function onSubmit() {
     ...form,
     prezzoBase: form.prezzoBase != null ? Number(form.prezzoBase) : null,
     quantitaDisponibile: form.quantitaDisponibile != null ? Number(form.quantitaDisponibile) : null,
-    schedaImpianto: { ...scheda }
+    diametroMillimetri: form.diametroMillimetri != null ? Number(form.diametroMillimetri) : null,
+    lunghezzaMillimetri: form.lunghezzaMillimetri != null ? Number(form.lunghezzaMillimetri) : null,
+    schedaImpianto: serializeScheda()
   }
   emit('salva', payload)
+}
+
+function serializeScheda() {
+  const schedaPayload = { ...scheda }
+  const hasValue = Object.entries(schedaPayload).some(([key, value]) => {
+    if (key === 'id') {
+      return value != null
+    }
+    return value != null && value !== ''
+  })
+  if (!hasValue) {
+    return null
+  }
+  schedaPayload.clienteDentaleId = schedaPayload.clienteDentaleId || null
+  return schedaPayload
 }
 </script>
