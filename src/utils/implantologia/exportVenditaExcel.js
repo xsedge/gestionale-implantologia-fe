@@ -19,21 +19,32 @@ export function exportVenditaExcel(vendita) {
 }
 
 function buildCommissionSheet(vendita) {
-  const columnCount = 8
+  const columnCount = 12
   const worksheet = XLSX.utils.aoa_to_sheet([])
   worksheet['!cols'] = [
+    { wch: 6 },
+    { wch: 16 },
+    { wch: 12 },
     { wch: 18 },
-    { wch: 28 },
-    { wch: 4 },
-    { wch: 18 },
-    { wch: 28 },
-    { wch: 4 },
-    { wch: 18 },
-    { wch: 28 }
+    { wch: 14 },
+    { wch: 12 },
+    { wch: 6 },
+    { wch: 14 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 14 },
+    { wch: 14 }
   ]
 
   const merges = []
   let row = 0
+
+  const BORDER_THIN = {
+    top: { style: 'thin', color: { rgb: '777777' } },
+    bottom: { style: 'thin', color: { rgb: '777777' } },
+    left: { style: 'thin', color: { rgb: '777777' } },
+    right: { style: 'thin', color: { rgb: '777777' } }
+  }
 
   function encode(rowIndex, colIndex) {
     return XLSX.utils.encode_cell({ r: rowIndex, c: colIndex })
@@ -47,102 +58,156 @@ function buildCommissionSheet(vendita) {
     return worksheet[address]
   }
 
-  function applyStyle(rowIndex, colIndex, style) {
+  function applyRangeStyle(startRow, startCol, endRow, endCol, style) {
+    for (let r = startRow; r <= endRow; r += 1) {
+      for (let c = startCol; c <= endCol; c += 1) {
+        const cell = ensureCell(r, c)
+        cell.s = { ...(cell.s || {}), ...style }
+      }
+    }
+  }
+
+  function setValue(rowIndex, colIndex, value, style = {}) {
     const cell = ensureCell(rowIndex, colIndex)
+    let cellValue = value
+    let cellType = 's'
+
+    if (value == null) {
+      cellValue = ''
+    } else if (typeof value === 'number') {
+      cellType = 'n'
+      cellValue = value
+    } else {
+      cellValue = String(value)
+    }
+
+    cell.v = cellValue
+    cell.t = cellType
     cell.s = { ...(cell.s || {}), ...style }
   }
 
-  function mergeRange(startRow, startCol, endRow, endCol) {
-    merges.push({ s: { r: startRow, c: startCol }, e: { r: endRow, c: endCol } })
+  function mergeAndSet(startRow, startCol, endRow, endCol, value, style = {}) {
+    if (startRow > endRow || startCol > endCol) return
+    setValue(startRow, startCol, value, style)
+    applyRangeStyle(startRow, startCol, endRow, endCol, style)
+    if (startRow !== endRow || startCol !== endCol) {
+      merges.push({ s: { r: startRow, c: startCol }, e: { r: endRow, c: endCol } })
+    }
   }
 
-  function addRow(values, startCol = 0) {
-    XLSX.utils.sheet_add_aoa(worksheet, [values], { origin: encode(row, startCol) })
+  function setRowHeight(rowIndex, height) {
+    if (!height) return
+    if (!worksheet['!rows']) {
+      worksheet['!rows'] = []
+    }
+    worksheet['!rows'][rowIndex] = { hpt: height }
+  }
+
+  function addEmptyRow(height) {
+    setRowHeight(row, height)
     row += 1
   }
 
-  function addEmptyRow() {
+  const titleStyle = {
+    font: { bold: true, sz: 18, color: { rgb: '1F497D' } },
+    alignment: { horizontal: 'center', vertical: 'center' }
+  }
+  mergeAndSet(row, 0, row, columnCount - 1, 'COPIA COMMISSIONE', titleStyle)
+  setRowHeight(row, 26)
+  row += 1
+
+  addEmptyRow(6)
+
+  const sectionHeaderStyle = {
+    font: { bold: true, color: { rgb: '1F497D' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: BORDER_THIN,
+    fill: { fgColor: { rgb: 'E6EEF7' } }
+  }
+  const labelCellStyle = {
+    font: { bold: true, color: { rgb: '333333' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: BORDER_THIN,
+    fill: { fgColor: { rgb: 'F7F7F7' } }
+  }
+  const valueCellStyle = {
+    alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+    border: BORDER_THIN
+  }
+  const tableHeaderStyle = {
+    font: { bold: true, color: { rgb: '1F497D' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: BORDER_THIN,
+    fill: { fgColor: { rgb: 'DBE6F5' } }
+  }
+  const tableValueStyle = {
+    alignment: { horizontal: 'left', vertical: 'top', wrapText: true },
+    border: BORDER_THIN
+  }
+  const tableValueRightStyle = {
+    alignment: { horizontal: 'right', vertical: 'center' },
+    border: BORDER_THIN
+  }
+  const summaryLabelStyle = {
+    font: { bold: true },
+    alignment: { horizontal: 'right', vertical: 'center' },
+    border: BORDER_THIN,
+    fill: { fgColor: { rgb: 'F2F2F2' } }
+  }
+  const summaryValueStyle = {
+    font: { bold: true },
+    alignment: { horizontal: 'right', vertical: 'center' },
+    border: BORDER_THIN
+  }
+  const signatureLabelStyle = {
+    font: { italic: true, color: { rgb: '555555' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: BORDER_THIN,
+    fill: { fgColor: { rgb: 'F9F9F9' } }
+  }
+  const signatureBoxStyle = {
+    border: BORDER_THIN
+  }
+
+  function addSectionHeader(title) {
+    mergeAndSet(row, 0, row, columnCount - 1, title, sectionHeaderStyle)
+    setRowHeight(row, 18)
     row += 1
   }
 
-  function addTitle(title) {
-    addRow([title])
-    mergeRange(row - 1, 0, row - 1, columnCount - 1)
-    applyStyle(row - 1, 0, {
-      font: { bold: true, sz: 16 },
-      alignment: { horizontal: 'center' }
-    })
-  }
-
-  function addSectionTitle(title) {
-    addRow([title])
-    mergeRange(row - 1, 0, row - 1, columnCount - 1)
-    applyStyle(row - 1, 0, {
-      font: { bold: true, sz: 12 },
-      alignment: { horizontal: 'left' }
-    })
-  }
-
-  function addKeyValueRow(labelLeft, valueLeft, labelCenter = '', valueCenter = '', labelRight = '', valueRight = '') {
-    const values = [
-      labelLeft || '',
-      valueLeft || '',
-      '',
-      labelCenter || '',
-      valueCenter || '',
-      '',
-      labelRight || '',
-      valueRight || ''
-    ]
-    addRow(values)
-    if (labelLeft) {
-      applyStyle(row - 1, 0, { font: { bold: true } })
+  function addFieldRow(left, right = null) {
+    if (left) {
+      mergeAndSet(row, 0, row, 1, left.label, labelCellStyle)
+      mergeAndSet(row, 2, row, 5, left.value, valueCellStyle)
+    } else {
+      mergeAndSet(row, 0, row, 5, '', valueCellStyle)
     }
-    if (labelCenter) {
-      applyStyle(row - 1, 3, { font: { bold: true } })
+
+    if (right) {
+      mergeAndSet(row, 6, row, 7, right.label, labelCellStyle)
+      mergeAndSet(row, 8, row, 11, right.value, valueCellStyle)
+    } else {
+      mergeAndSet(row, 6, row, 11, '', valueCellStyle)
     }
-    if (labelRight) {
-      applyStyle(row - 1, 6, { font: { bold: true } })
-    }
+
+    setRowHeight(row, 18)
+    row += 1
   }
 
-  function addBlock(label, value) {
-    addRow([label || '', value || ''])
-    mergeRange(row - 1, 1, row - 1, columnCount - 1)
-    applyStyle(row - 1, 0, { font: { bold: true } })
-    applyStyle(row - 1, 1, { alignment: { wrapText: true } })
+  function addFullWidthField(label, value) {
+    mergeAndSet(row, 0, row, 1, label, labelCellStyle)
+    mergeAndSet(row, 2, row, columnCount - 1, value, valueCellStyle)
+    setRowHeight(row, value && String(value).length > 40 ? 30 : 18)
+    row += 1
   }
 
-  function addDetailHeader(values) {
-    addRow(values)
-    values.forEach((_, index) => {
-      applyStyle(row - 1, index, {
-        font: { bold: true },
-        alignment: { horizontal: 'center' }
-      })
+  function addTableHeader(columns) {
+    columns.forEach(column => {
+      mergeAndSet(row, column.start, row, column.end, column.label, tableHeaderStyle)
     })
+    setRowHeight(row, 20)
+    row += 1
   }
-
-  addTitle('COPIA COMMISSIONE')
-  addEmptyRow()
-
-  addSectionTitle('Dati vendita')
-  addKeyValueRow('Numero commissione', formatValue(vendita.numero), 'Data intervento', formatDate(vendita.dataIntervento), 'Stato pagamento', formatValue(vendita.statoPagamento))
-  addKeyValueRow('Medico', formatValue(vendita.medico), 'Registrata il', formatDateTime(vendita.createdAt || vendita.dataCreazione), 'Ultimo aggiornamento', formatDateTime(vendita.updatedAt || vendita.dataAggiornamento))
-
-  addEmptyRow()
-
-  addSectionTitle('Cliente / Studio')
-  addKeyValueRow('Studio dentale', formatValue(getClienteField(vendita, ['clienteDentaleStudio', 'studioDentale'])), 'Referente', formatCliente(vendita), 'Cliente ID', formatValue(getClienteField(vendita, ['clienteDentaleId', 'clienteId'])))
-  addKeyValueRow('Telefono', formatValue(getClienteField(vendita, ['clienteDentaleTelefono', 'telefono'])), 'Email', formatValue(getClienteField(vendita, ['clienteDentaleEmail', 'email'])))
-  addBlock('Indirizzo', formatValue(getClienteField(vendita, ['clienteDentaleIndirizzo', 'indirizzo'])))
-
-  const noteCliente = getClienteField(vendita, ['clienteDentaleNote', 'noteCliente'])
-  if (noteCliente) {
-    addBlock('Note cliente', noteCliente)
-  }
-
-  addEmptyRow()
 
   const dettagli = getDettagli(vendita)
   const totaleVendita = calcolaTotale(vendita)
@@ -150,47 +215,118 @@ function buildCommissionSheet(vendita) {
   const acconto = getFirstNumber([vendita.acconto, vendita.importoAcconto, vendita.accontoRicevuto, vendita.accontoVersato])
   const saldo = totaleVendita - acconto
 
-  addSectionTitle('Riepilogo economico')
-  addKeyValueRow('Nr. prodotti', formatNumber(dettagli.length), 'Quantità complessive', formatNumber(totaleQuantita))
-  addKeyValueRow('Totale commissione', formatCurrency(totaleVendita), 'Acconto', acconto ? formatCurrency(acconto) : '-', 'Saldo da saldare', formatCurrency(Math.max(saldo, 0)))
+  addSectionHeader('DATI COMMISSIONE')
+  addFieldRow(
+    { label: 'Numero commissione', value: formatValue(vendita.numero) },
+    { label: 'Data intervento', value: formatDate(vendita.dataIntervento) }
+  )
+  addFieldRow(
+    { label: 'Medico', value: formatValue(vendita.medico) },
+    { label: 'Registrata il', value: formatDateTime(vendita.createdAt || vendita.dataCreazione) }
+  )
+  addFieldRow(
+    { label: 'Stato pagamento', value: formatValue(vendita.statoPagamento) },
+    { label: 'Ultimo aggiornamento', value: formatDateTime(vendita.updatedAt || vendita.dataAggiornamento) }
+  )
+
+  addSectionHeader('CLIENTE / STUDIO')
+  addFieldRow(
+    { label: 'Studio dentale', value: formatValue(getClienteField(vendita, ['clienteDentaleStudio', 'studioDentale'])) },
+    { label: 'Referente', value: formatCliente(vendita) }
+  )
+  addFieldRow(
+    { label: 'Telefono', value: formatValue(getClienteField(vendita, ['clienteDentaleTelefono', 'telefono'])) },
+    { label: 'Email', value: formatValue(getClienteField(vendita, ['clienteDentaleEmail', 'email'])) }
+  )
+  addFullWidthField('Indirizzo', formatValue(getClienteField(vendita, ['clienteDentaleIndirizzo', 'indirizzo'])))
+
+  const noteCliente = getClienteField(vendita, ['clienteDentaleNote', 'noteCliente'])
+  if (noteCliente) {
+    addFullWidthField('Note cliente', noteCliente)
+  }
+
+  addSectionHeader('RIEPILOGO ECONOMICO')
+  addFieldRow(
+    { label: 'Totale commissione', value: formatCurrency(totaleVendita) },
+    { label: 'Acconto', value: acconto ? formatCurrency(acconto) : '-' }
+  )
+  addFieldRow(
+    { label: 'Saldo da saldare', value: formatCurrency(Math.max(saldo, 0)) },
+    { label: 'Nr. prodotti', value: formatNumber(dettagli.length) }
+  )
+  addFieldRow(
+    { label: 'Quantità complessive', value: formatNumber(totaleQuantita) },
+    { label: 'Metodo pagamento', value: formatValue(vendita.metodoPagamento || vendita.modalitaPagamento || '-') }
+  )
 
   if (vendita.note) {
-    addEmptyRow()
-    addSectionTitle('Note interne')
-    addBlock('Note', vendita.note)
+    addFullWidthField('Note interne', vendita.note)
   }
+
+  addSectionHeader('DETTAGLIO MATERIALI / PRESTAZIONI')
+
+  const tableColumns = [
+    { label: 'N°', start: 0, end: 0, align: tableValueRightStyle },
+    { label: 'Codice', start: 1, end: 2 },
+    { label: 'Descrizione / Note', start: 3, end: 6 },
+    { label: 'Listino', start: 7, end: 7 },
+    { label: 'Q.tà', start: 8, end: 8, align: tableValueRightStyle },
+    { label: 'Prezzo', start: 9, end: 9, align: tableValueRightStyle },
+    { label: 'Importo', start: 10, end: 11, align: tableValueRightStyle }
+  ]
+
+  addTableHeader(tableColumns)
 
   if (dettagli.length) {
-    addEmptyRow()
-    addSectionTitle('Dettaglio commissione')
-    addDetailHeader(['Pos', 'Codice', 'Descrizione', 'Listino', 'Quantità', 'Prezzo unitario', 'Totale riga', 'Note'])
-
     dettagli.forEach((det, index) => {
-      addRow([
-        formatNumber(index + 1),
-        formatValue(det.prodottoCodice || det.prodotto?.codice),
+      const descriptionParts = [
         formatValue(det.prodottoNome || det.prodotto?.nome),
-        formatValue(formatListino(det)),
-        formatNumber(det.quantita),
-        formatCurrency(prezzoUnitario(det)),
-        formatCurrency(calcolaTotaleRiga(det)),
-        formatValue(det.note)
-      ])
-      applyStyle(row - 1, 4, { alignment: { horizontal: 'right' } })
-      applyStyle(row - 1, 5, { alignment: { horizontal: 'right' } })
-      applyStyle(row - 1, 6, { alignment: { horizontal: 'right' } })
+        det.note ? `Note: ${det.note}` : ''
+      ].filter(Boolean)
+
+      const rowConfig = [
+        { start: 0, end: 0, value: formatNumber(index + 1), style: tableValueRightStyle },
+        { start: 1, end: 2, value: formatValue(det.prodottoCodice || det.prodotto?.codice), style: tableValueStyle },
+        { start: 3, end: 6, value: descriptionParts.join('\n') || '-', style: tableValueStyle },
+        { start: 7, end: 7, value: formatValue(formatListino(det)), style: tableValueStyle },
+        { start: 8, end: 8, value: formatNumber(det.quantita), style: tableValueRightStyle },
+        { start: 9, end: 9, value: formatCurrency(prezzoUnitario(det)), style: tableValueRightStyle },
+        { start: 10, end: 11, value: formatCurrency(calcolaTotaleRiga(det)), style: tableValueRightStyle }
+      ]
+
+      rowConfig.forEach(cell => {
+        mergeAndSet(row, cell.start, row, cell.end, cell.value, cell.style)
+      })
+      setRowHeight(row, descriptionParts.length > 1 ? 28 : 18)
+      row += 1
     })
 
-    addRow(['', '', '', '', '', 'Totale commissione', formatCurrency(totaleVendita), ''])
-    mergeRange(row - 1, 0, row - 1, 4)
-    applyStyle(row - 1, 5, { font: { bold: true }, alignment: { horizontal: 'right' } })
-    applyStyle(row - 1, 6, { font: { bold: true }, alignment: { horizontal: 'right' } })
+    mergeAndSet(row, 0, row, 9, 'Totale commissione', summaryLabelStyle)
+    mergeAndSet(row, 10, row, 11, formatCurrency(totaleVendita), summaryValueStyle)
+    setRowHeight(row, 20)
+    row += 1
+
+    mergeAndSet(row, 0, row, 9, 'Quantità complessive', summaryLabelStyle)
+    mergeAndSet(row, 10, row, 11, formatNumber(totaleQuantita), summaryValueStyle)
+    setRowHeight(row, 20)
+    row += 1
   } else {
-    addEmptyRow()
-    addSectionTitle('Dettaglio commissione')
-    addRow(['', 'Nessun dettaglio disponibile'])
-    mergeRange(row - 1, 1, row - 1, columnCount - 1)
+    mergeAndSet(row, 0, row, columnCount - 1, 'Nessun dettaglio disponibile', tableValueStyle)
+    setRowHeight(row, 20)
+    row += 1
   }
+
+  addEmptyRow(10)
+
+  mergeAndSet(row, 0, row, 5, 'Firma Studio / Dottore', signatureLabelStyle)
+  mergeAndSet(row, 6, row, 11, 'Firma Gestionale', signatureLabelStyle)
+  setRowHeight(row, 18)
+  row += 1
+
+  mergeAndSet(row, 0, row, 5, '', signatureBoxStyle)
+  mergeAndSet(row, 6, row, 11, '', signatureBoxStyle)
+  setRowHeight(row, 32)
+  row += 1
 
   worksheet['!merges'] = merges
   return worksheet
