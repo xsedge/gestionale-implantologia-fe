@@ -7,10 +7,8 @@ export function exportVenditaExcel(vendita) {
 
   const workbook = XLSX.utils.book_new()
   const commissionSheet = buildCommissionSheet(vendita)
-  const rawDetailsSheet = buildDetailsSheet(vendita)
 
   XLSX.utils.book_append_sheet(workbook, commissionSheet, 'Copia Commissione')
-  XLSX.utils.book_append_sheet(workbook, rawDetailsSheet, 'Dettagli')
 
   const fileName = generateFileName(vendita)
   XLSX.writeFile(workbook, fileName, { compression: true })
@@ -353,117 +351,11 @@ function buildCommissionSheet(vendita) {
   setRowHeight(row, 36)
   row += 1
 
-  worksheet['!merges'] = merges
-  return worksheet
-}
-
-function buildDetailsSheet(vendita) {
-  const worksheet = XLSX.utils.aoa_to_sheet([])
-  worksheet['!cols'] = [
-    { wch: 24 },
-    { wch: 40 },
-    { wch: 24 },
-    { wch: 40 },
-    { wch: 24 },
-    { wch: 18 },
-    { wch: 20 },
-    { wch: 20 },
-    { wch: 36 }
-  ]
-
-  const merges = []
-  let row = 0
-
-  function encode(rowIndex, colIndex) {
-    return XLSX.utils.encode_cell({ r: rowIndex, c: colIndex })
-  }
-
-  function addRow(values, startCol = 0) {
-    XLSX.utils.sheet_add_aoa(worksheet, [values], { origin: encode(row, startCol) })
-    row += 1
-  }
-
-  function addMerge(startRow, startCol, endRow, endCol) {
-    merges.push({ s: { r: startRow, c: startCol }, e: { r: endRow, c: endCol } })
-  }
-
-  function applyStyle(rowIndex, colIndex, style) {
-    const address = encode(rowIndex, colIndex)
-    const cell = worksheet[address]
-    if (cell) {
-      cell.s = { ...(cell.s || {}), ...style }
-    }
-  }
-
-  addRow(['Campo', 'Valore'])
-  applyStyle(row - 1, 0, { font: { bold: true } })
-  applyStyle(row - 1, 1, { font: { bold: true } })
-
-  const infoRows = [
-    ['ID vendita', formatValue(vendita.id)],
-    ['Numero', formatValue(vendita.numero)],
-    ['Data intervento', formatDate(vendita.dataIntervento)],
-    ['Medico', formatValue(vendita.medico)],
-    ['Stato pagamento', formatValue(vendita.statoPagamento)],
-    ['Totale registrato', formatCurrency(vendita.totale)],
-    ['Totale calcolato', formatCurrency(calcolaTotale(vendita))],
-    ['Cliente ID', formatValue(getClienteField(vendita, ['clienteDentaleId', 'clienteId']))],
-    ['Cliente', formatCliente(vendita)],
-    ['Studio dentale', formatValue(getClienteField(vendita, ['clienteDentaleStudio', 'studioDentale']))],
-    ['Telefono', formatValue(getClienteField(vendita, ['clienteDentaleTelefono', 'telefono']))],
-    ['Email', formatValue(getClienteField(vendita, ['clienteDentaleEmail', 'email']))],
-    ['Indirizzo', formatValue(getClienteField(vendita, ['clienteDentaleIndirizzo', 'indirizzo']))],
-    ['Note', formatValue(vendita.note)],
-    ['Creato il', formatDateTime(vendita.createdAt || vendita.dataCreazione)],
-    ['Aggiornato il', formatDateTime(vendita.updatedAt || vendita.dataAggiornamento)]
-  ]
-
-  infoRows.forEach(rowValues => addRow(rowValues))
-
-  row += 1
-
-  const dettagli = getDettagli(vendita)
-  const totaleQuantita = dettagli.reduce((sum, det) => sum + (Number(det?.quantita) || 0), 0)
-  const totaleVendita = calcolaTotale(vendita)
-
-  addRow(['Dettagli righe'])
-  addMerge(row - 1, 0, row - 1, 8)
-  applyStyle(row - 1, 0, { font: { bold: true } })
-
-  addRow(['Riga', 'Prodotto ID', 'Codice', 'Descrizione', 'Listino', 'Quantità', 'Prezzo unitario', 'Totale riga', 'Note'])
-  for (let col = 0; col < 9; col += 1) {
-    applyStyle(row - 1, col, { font: { bold: true } })
-  }
-
-  if (dettagli.length) {
-    dettagli.forEach((det, index) => {
-      addRow([
-        formatNumber(det.id ?? index + 1),
-        formatValue(det.prodottoId || det.prodotto?.id),
-        formatValue(det.prodottoCodice || det.prodotto?.codice),
-        formatValue(det.prodottoNome || det.prodotto?.nome),
-        formatValue(formatListino(det)),
-        formatNumber(det.quantita),
-        formatCurrency(prezzoUnitario(det)),
-        formatCurrency(calcolaTotaleRiga(det)),
-        formatValue(det.note)
-      ])
-      applyStyle(row - 1, 5, { alignment: { horizontal: 'right' } })
-      applyStyle(row - 1, 6, { alignment: { horizontal: 'right' } })
-      applyStyle(row - 1, 7, { alignment: { horizontal: 'right' } })
-    })
-
-    addRow(['', '', '', '', 'Totale', 'Quantità complessive', formatNumber(totaleQuantita), 'Totale commissione', formatCurrency(totaleVendita)])
-    addMerge(row - 1, 0, row - 1, 4)
-    applyStyle(row - 1, 5, { font: { bold: true } })
-    applyStyle(row - 1, 6, { font: { bold: true }, alignment: { horizontal: 'right' } })
-    applyStyle(row - 1, 7, { font: { bold: true } })
-    applyStyle(row - 1, 8, { font: { bold: true }, alignment: { horizontal: 'right' } })
-  } else {
-    addRow(['', '', '', 'Nessun dettaglio disponibile'])
-    addMerge(row - 1, 3, row - 1, 8)
-  }
-
+  const lastRow = Math.max(row - 1, 0)
+  worksheet['!ref'] = XLSX.utils.encode_range({
+    s: { r: 0, c: 0 },
+    e: { r: lastRow, c: columnCount - 1 }
+  })
   worksheet['!merges'] = merges
   return worksheet
 }
@@ -478,28 +370,9 @@ function getDettagli(vendita) {
   return []
 }
 
-function formatListino(det) {
-  if (!det) {
-    return '-'
-  }
-  if (det.listinoNome) {
-    return det.listinoNome
-  }
-  if (det.listino?.nome) {
-    return det.listino.nome
-  }
-  if (det.listinoLabel) {
-    return det.listinoLabel
-  }
-  if (det.listinoId) {
-    return `Listino #${det.listinoId}`
-  }
-  return '-'
-}
-
 function formatCategoria(det) {
   if (!det) {
-    return '-'
+    return ''
   }
   const value =
     det.categoria ||
@@ -514,7 +387,7 @@ function formatCategoria(det) {
 
 function formatImpiantoMoncone(det) {
   if (!det) {
-    return '-'
+    return ''
   }
   const value =
     det.impianto ||
@@ -526,7 +399,7 @@ function formatImpiantoMoncone(det) {
     det.prodotto?.impianto ||
     det.prodotto?.moncone
   if (Array.isArray(value)) {
-    return value.filter(Boolean).join(', ') || '-'
+    return value.filter(Boolean).join(', ')
   }
   return formatValue(value)
 }
@@ -550,7 +423,7 @@ function coercePercentage(value) {
 
 function formatPercentuale(det) {
   if (!det || typeof det !== 'object') {
-    return '-'
+    return ''
   }
   const candidates = [
     det.scontoPercentuale,
@@ -567,23 +440,23 @@ function formatPercentuale(det) {
     }
   }
 
-  return '-'
+  return ''
 }
 
 function formatDate(value) {
-  if (!value) return '-'
+  if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
-    return '-'
+    return ''
   }
   return new Intl.DateTimeFormat('it-IT').format(date)
 }
 
 function formatDateTime(value) {
-  if (!value) return '-'
+  if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
-    return '-'
+    return ''
   }
   return new Intl.DateTimeFormat('it-IT', {
     dateStyle: 'short',
@@ -592,12 +465,12 @@ function formatDateTime(value) {
 }
 
 function formatCurrency(value) {
-  if (value == null || value === '') return '-'
+  if (value == null || value === '') return ''
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(Number(value) || 0)
 }
 
 function formatNumber(value) {
-  if (value == null || value === '') return '-'
+  if (value == null || value === '') return ''
   const number = Number(value)
   if (Number.isNaN(number)) {
     return String(value)
@@ -690,7 +563,7 @@ function prezzoUnitario(det) {
 }
 
 function formatCliente(vendita) {
-  if (!vendita) return '-'
+  if (!vendita) return ''
   const nominativo = [
     vendita.clienteDentaleNome,
     vendita.clienteDentaleCognome
@@ -705,9 +578,9 @@ function formatCliente(vendita) {
     return vendita.cliente
   }
   if (vendita.clienteDentale?.nome || vendita.clienteDentale?.cognome) {
-    return [vendita.clienteDentale?.nome, vendita.clienteDentale?.cognome].filter(Boolean).join(' ').trim() || '-'
+    return [vendita.clienteDentale?.nome, vendita.clienteDentale?.cognome].filter(Boolean).join(' ').trim()
   }
-  return '-'
+  return ''
 }
 
 function getClienteField(vendita, keys = []) {
@@ -724,13 +597,17 @@ function getClienteField(vendita, keys = []) {
 }
 
 function formatValue(value) {
-  if (value == null || value === '') {
-    return '-'
+  if (value == null) {
+    return ''
   }
   if (typeof value === 'string') {
-    return value
+    const trimmed = value.trim()
+    return trimmed
   }
   if (typeof value === 'number') {
+    if (Number.isNaN(value)) {
+      return ''
+    }
     return new Intl.NumberFormat('it-IT').format(value)
   }
   return String(value)
