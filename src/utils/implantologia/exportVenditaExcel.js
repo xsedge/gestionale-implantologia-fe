@@ -37,12 +37,19 @@ function buildCommissionSheet(vendita) {
   const merges = []
   let row = 0
 
-  const BORDER_THIN = {
-    top: { style: 'thin', color: { rgb: '777777' } },
-    bottom: { style: 'thin', color: { rgb: '777777' } },
-    left: { style: 'thin', color: { rgb: '777777' } },
-    right: { style: 'thin', color: { rgb: '777777' } }
+  const SECTION_FRAME_COLOR = '305496'
+
+  function createBorder(style, color) {
+    return {
+      top: { style, color: { rgb: color } },
+      bottom: { style, color: { rgb: color } },
+      left: { style, color: { rgb: color } },
+      right: { style, color: { rgb: color } }
+    }
   }
+
+  const BORDER_THIN = createBorder('thin', '777777')
+  const BORDER_MEDIUM = createBorder('medium', SECTION_FRAME_COLOR)
 
   function encode(rowIndex, colIndex) {
     return XLSX.utils.encode_cell({ r: rowIndex, c: colIndex })
@@ -116,6 +123,12 @@ function buildCommissionSheet(vendita) {
 
   addEmptyRow(6)
 
+  const sectionHeaderStyle = {
+    font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: BORDER_MEDIUM,
+    fill: { fgColor: { rgb: '203864' } }
+  }
   const fieldLabelStyle = {
     font: { bold: true, color: { rgb: '000000' } },
     alignment: { horizontal: 'left', vertical: 'center' },
@@ -124,32 +137,36 @@ function buildCommissionSheet(vendita) {
   }
   const fieldValueStyle = {
     alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
-    border: BORDER_THIN
+    border: BORDER_THIN,
+    fill: { fgColor: { rgb: 'FFFFFF' } }
   }
   const tableHeaderStyle = {
     font: { bold: true, color: { rgb: '1F497D' } },
     alignment: { horizontal: 'center', vertical: 'center' },
     border: BORDER_THIN,
-    fill: { fgColor: { rgb: 'E3EBF8' } }
+    fill: { fgColor: { rgb: 'D9E2F3' } }
   }
   const tableTextStyle = {
     alignment: { horizontal: 'left', vertical: 'top', wrapText: true },
-    border: BORDER_THIN
+    border: BORDER_THIN,
+    fill: { fgColor: { rgb: 'FDFDFD' } }
   }
   const tableNumberStyle = {
     alignment: { horizontal: 'right', vertical: 'center' },
-    border: BORDER_THIN
+    border: BORDER_THIN,
+    fill: { fgColor: { rgb: 'FDFDFD' } }
   }
   const summaryLabelStyle = {
     font: { bold: true },
     alignment: { horizontal: 'right', vertical: 'center' },
     border: BORDER_THIN,
-    fill: { fgColor: { rgb: 'F5F5F5' } }
+    fill: { fgColor: { rgb: 'EDEDED' } }
   }
   const summaryValueStyle = {
     font: { bold: true },
     alignment: { horizontal: 'right', vertical: 'center' },
-    border: BORDER_THIN
+    border: BORDER_THIN,
+    fill: { fgColor: { rgb: 'FFFFFF' } }
   }
   const noteLabelStyle = {
     font: { bold: true },
@@ -165,6 +182,40 @@ function buildCommissionSheet(vendita) {
   }
   const signatureBoxStyle = {
     border: BORDER_THIN
+  }
+
+  function addSectionHeader(text) {
+    mergeAndSet(row, 0, row, columnCount - 1, text, sectionHeaderStyle)
+    setRowHeight(row, 22)
+    row += 1
+  }
+
+  function applySectionFrame(startRow, endRow, startCol = 0, endCol = columnCount - 1) {
+    if (startRow > endRow) {
+      return
+    }
+    for (let r = startRow; r <= endRow; r += 1) {
+      for (let c = startCol; c <= endCol; c += 1) {
+        const cell = ensureCell(r, c)
+        const existingStyle = cell.s || {}
+        const existingBorder = { ...(existingStyle.border || {}) }
+
+        if (r === startRow) {
+          existingBorder.top = { style: 'medium', color: { rgb: SECTION_FRAME_COLOR } }
+        }
+        if (r === endRow) {
+          existingBorder.bottom = { style: 'medium', color: { rgb: SECTION_FRAME_COLOR } }
+        }
+        if (c === startCol) {
+          existingBorder.left = { style: 'medium', color: { rgb: SECTION_FRAME_COLOR } }
+        }
+        if (c === endCol) {
+          existingBorder.right = { style: 'medium', color: { rgb: SECTION_FRAME_COLOR } }
+        }
+
+        cell.s = { ...existingStyle, border: existingBorder }
+      }
+    }
   }
 
   function addFieldRow(left, right = null) {
@@ -207,6 +258,9 @@ function buildCommissionSheet(vendita) {
     ])
   )
 
+  const anagraficaSectionStart = row
+  addSectionHeader('DATI COMMISSIONE E CLIENTE')
+
   const fieldRows = [
     {
       left: { label: 'Data commissione', value: dataCommissione },
@@ -231,6 +285,8 @@ function buildCommissionSheet(vendita) {
   ]
 
   fieldRows.forEach(({ left, right }) => addFieldRow(left, right))
+
+  applySectionFrame(anagraficaSectionStart, row - 1)
 
   addEmptyRow(4)
 
@@ -258,6 +314,9 @@ function buildCommissionSheet(vendita) {
     { label: 'Sconto %', start: 10, end: 10 },
     { label: 'Totale riga', start: 11, end: 11 }
   ]
+
+  const prodottiSectionStart = row
+  addSectionHeader('DETTAGLIO PRODOTTI E LAVORAZIONI')
 
   tableColumns.forEach(column => {
     mergeAndSet(row, column.start, row, column.end, column.label, tableHeaderStyle)
@@ -308,6 +367,13 @@ function buildCommissionSheet(vendita) {
     }
   }
 
+  applySectionFrame(prodottiSectionStart, row - 1)
+
+  addEmptyRow(4)
+
+  const pagamentoSectionStart = row
+  addSectionHeader('PAGAMENTO, NOTE E FIRME')
+
   mergeAndSet(row, 0, row, 8, 'Quantità complessive', summaryLabelStyle)
   mergeAndSet(row, 9, row, 11, formatNumber(totaleQuantita), summaryValueStyle)
   setRowHeight(row, 20)
@@ -350,6 +416,8 @@ function buildCommissionSheet(vendita) {
   mergeAndSet(row, 6, row, 11, '', signatureBoxStyle)
   setRowHeight(row, 36)
   row += 1
+
+  applySectionFrame(pagamentoSectionStart, row - 1)
 
   const lastRow = Math.max(row - 1, 0)
   worksheet['!ref'] = XLSX.utils.encode_range({
