@@ -1,80 +1,157 @@
 <template>
-    <div>
-        <q-table v-if="!isMobile" :rows="props.rows" :columns="props.columns" row-key="id" flat bordered class="q-pa-sm"
-            :loading="props.loading" no-data-label="Nessun dato disponibile">
-            <template #body="props">
-                <q-tr :props="props">
-                    <q-td v-for="col in columns" :key="col.name" :props="props">
-                        {{ resolveField(props.row, col.field) }}
-                    </q-td>
-                </q-tr>
+  <div class="responsive-table">
+    <q-table
+      :grid="isMobile"
+      :hide-header="isMobile"
+      :rows="rows"
+      :columns="normalizedColumns"
+      :row-key="rowKey"
+      :loading="loading"
+      flat
+      bordered
+      class="q-pa-sm responsive-table__table"
+      v-bind="tableAttrs"
+    >
+      <template v-for="slotName in forwardedSlots" #[slotName]="slotProps">
+        <slot :name="slotName" v-bind="slotProps" />
+      </template>
+
+      <template v-if="isMobile" #item="props">
+        <div class="col-12 q-pa-xs">
+          <q-card flat bordered class="responsive-table__card">
+            <q-card-section
+              v-for="col in props.cols"
+              :key="`${props.key}-${col.name}`"
+              v-show="!isActionColumn(col.name) && !isColumnHidden(col.name)"
+              class="row items-start no-wrap q-col-gutter-sm responsive-table__card-section"
+            >
+              <div class="col-5 text-weight-medium text-grey-7">{{ getColumnLabel(col.name, col.label) }}</div>
+              <div class="col-7 text-right">
+                <slot
+                  :name="`mobile-cell-${col.name}`"
+                  :row="props.row"
+                  :col="col"
+                  :value="formatColumnValue(props.row, col.name, col.value)"
+                >
+                  <span class="responsive-table__value" v-html="formatColumnValue(props.row, col.name, col.value)" />
+                </slot>
+              </div>
+            </q-card-section>
+
+            <template v-for="col in props.cols" :key="`${props.key}-${col.name}-actions`">
+              <template v-if="isActionColumn(col.name) && !isColumnHidden(col.name)">
+                <q-separator />
+                <q-card-actions class="q-gutter-xs" align="right">
+                  <slot
+                    :name="`mobile-cell-${col.name}`"
+                    :row="props.row"
+                    :col="col"
+                    :value="formatColumnValue(props.row, col.name, col.value)"
+                  >
+                    <span class="responsive-table__value" v-html="formatColumnValue(props.row, col.name, col.value)" />
+                  </slot>
+                </q-card-actions>
+              </template>
             </template>
-        </q-table>
-
-        <!-- Mobile layout -->
-        <div v-else class="q-pa-sm">
-            <q-card v-for="row in rows" :key="row.id" class="q-mb-md" bordered flat>
-                <q-card-section v-for="col in columns" :key="col.name" class="row q-col-gutter-sm">
-                    <div class="col-5 text-weight-bold">{{ col.label }}</div>
-                    <div class="col-7" align="right">{{ resolveField(row, col.field) }}</div>
-                </q-card-section>
-            </q-card>
-
-            <div v-if="!rows.length && !loading" class="text-center text-grey q-mt-md">
-                Nessun dato disponibile
-            </div>
+          </q-card>
         </div>
-    </div>
+      </template>
+    </q-table>
+
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useAttrs, useSlots } from 'vue'
 
 const props = defineProps({
-    columns: { type: Array, required: true },
-    rows: { type: Array, required: true },
-    loading: { type: Boolean, default: false }
+  columns: { type: Array, required: true },
+  rows: { type: Array, required: true },
+  loading: { type: Boolean, default: false },
+  rowKey: { type: [String, Number, Function], default: 'id' },
+  actionColumns: { type: Array, default: () => ['azioni'] },
+  hiddenColumns: { type: Array, default: () => [] }
 })
+
+const attrs = useAttrs()
+const slots = useSlots()
 
 const isMobile = ref(false)
 
-const checkMobile = () => {
-    isMobile.value = window.innerWidth <= 768
+const tableAttrs = computed(() => ({
+  ...attrs
+}))
+
+const normalizedColumns = computed(() =>
+  props.columns.map(col => ({
+    ...col,
+    label: col.label ?? col.name,
+    align: col.align ?? 'left'
+  }))
+)
+
+const forwardedSlots = computed(() =>
+  Object.keys(slots).filter(name => !name.startsWith('mobile-cell'))
+)
+
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 768
 }
 
 onMounted(() => {
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
 })
 
 onUnmounted(() => {
-    window.removeEventListener('resize', checkMobile)
+  window.removeEventListener('resize', checkMobile)
 })
 
-/**
- * Gestisce sia field come stringa che come funzione
- */
-function resolveField(row, field) {
-    if (typeof field === 'function') {
-        return field(row)
-    }
-    if (typeof field === 'string') {
-        return row[field]
-    }
-    return ''
+function formatColumnValue(row, name, value) {
+  const slot = slots[`mobile-cell-${name}`]
+  if (slot) {
+    return value
+  }
+
+  if (value === null || value === undefined || value === '') {
+    return '<span class="text-grey-6">-</span>'
+  }
+  return value
+}
+
+function getColumnLabel(name, fallback) {
+  const column = props.columns.find(col => col.name === name)
+  return column?.mobileLabel ?? column?.label ?? fallback ?? name
+}
+
+function isActionColumn(name) {
+  return props.actionColumns.includes(name)
+}
+
+function isColumnHidden(name) {
+  return props.hiddenColumns.includes(name)
 }
 </script>
 
 <style scoped>
-.q-table {
-    background-color: white;
+.responsive-table__table {
+  background-color: white;
 }
 
-.q-card-section {
-    border-bottom: 1px solid #eee;
+.responsive-table__card {
+  background: white;
 }
 
-.q-card-section:last-child {
-    border-bottom: none;
+.responsive-table__card-section {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 12px 0;
+}
+
+.responsive-table__card-section:last-of-type {
+  border-bottom: none;
+}
+
+.responsive-table__value :deep(.q-badge) {
+  margin-left: auto;
 }
 </style>

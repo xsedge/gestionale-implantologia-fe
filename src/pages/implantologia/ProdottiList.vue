@@ -29,8 +29,17 @@
       <q-separator />
 
       <q-card-section>
-        <q-table :rows="filteredProdotti" :columns="columns" row-key="id" flat bordered :loading="store.loading"
-          no-data-label="Nessun prodotto trovato" rows-per-page-label="Prodotti per pagina" :pagination="pagination">
+        <ResponsiveTable
+          :rows="filteredProdotti"
+          :columns="columns"
+          row-key="id"
+          flat
+          bordered
+          :loading="store.loading"
+          no-data-label="Nessun prodotto trovato"
+          rows-per-page-label="Prodotti per pagina"
+          :pagination="pagination"
+        >
           <template #body-cell-listini="props">
             <q-td :props="props">
               <q-chip v-for="listino in props.row.listinoIds" :key="`${props.row.id}-${listino}`" dense color="primary"
@@ -61,7 +70,32 @@
               <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(props.row)" />
             </q-td>
           </template>
-        </q-table>
+          <template #mobile-cell-listini="{ row }">
+            <div class="column items-end q-gutter-xs">
+              <q-chip v-for="listino in row.listinoIds" :key="`${row.id}-${listino}`" dense color="primary" text-color="white">
+                {{ getListinoNome(listino) }}
+              </q-chip>
+              <span v-if="!row.listinoIds?.length" class="text-grey-6">-</span>
+            </div>
+          </template>
+          <template #mobile-cell-scheda="{ row }">
+            <div v-if="row.schedaImpianto" class="column items-end text-caption q-gutter-xs">
+              <div><strong>Lotto:</strong> {{ row.schedaImpianto.lotto || '-' }}</div>
+              <div><strong>Materiale:</strong> {{ row.schedaImpianto.materiale || '-' }}</div>
+              <div><strong>Scadenza:</strong> {{ formatDate(row.schedaImpianto.dataScadenza) }}</div>
+              <div><strong>Posizionamento:</strong> {{ formatDate(row.schedaImpianto.dataPosizionamento) }}</div>
+              <div><strong>Arcata:</strong> {{ row.schedaImpianto.arcata || '-' }} ·
+                {{ row.schedaImpianto.posizione || '-' }}</div>
+            </div>
+            <span v-else class="text-grey-6">-</span>
+          </template>
+          <template #mobile-cell-azioni="{ row }">
+            <div class="q-gutter-xs">
+              <q-btn dense flat round icon="edit" color="primary" @click="openEdit(row)" />
+              <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(row)" />
+            </div>
+          </template>
+        </ResponsiveTable>
       </q-card-section>
     </q-card>
 
@@ -79,6 +113,7 @@ import { useImplantologiaFornitoriStore } from 'src/stores/implantologiaFornitor
 import { useImplantologiaListiniStore } from 'src/stores/implantologiaListiniStore.js'
 import { useImplantologiaClientiStore } from 'src/stores/implantologiaClientiStore.js'
 import ModaleProdotto from 'src/components/implantologia/ModaleProdotto.vue'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const $q = useQuasar()
 const store = useImplantologiaProdottiStore()

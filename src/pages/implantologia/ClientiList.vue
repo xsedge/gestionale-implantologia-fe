@@ -24,8 +24,17 @@
       <q-separator />
 
       <q-card-section>
-        <q-table :rows="filteredClienti" :columns="columns" row-key="id" flat bordered :loading="store.loading"
-          no-data-label="Nessun cliente trovato" rows-per-page-label="Clienti per pagina" :pagination="pagination">
+        <ResponsiveTable
+          :rows="filteredClienti"
+          :columns="columns"
+          row-key="id"
+          flat
+          bordered
+          :loading="store.loading"
+          no-data-label="Nessun cliente trovato"
+          rows-per-page-label="Clienti per pagina"
+          :pagination="pagination"
+        >
           <template #body-cell-cliente="props">
             <q-td :props="props">
               <div class="text-weight-medium">{{ formatFullName(props.row) }}</div>
@@ -41,7 +50,22 @@
               <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(props.row)" />
             </q-td>
           </template>
-        </q-table>
+          <template #mobile-cell-cliente="{ row }">
+            <div class="column items-end">
+              <div class="text-weight-medium">{{ formatFullName(row) }}</div>
+              <div class="text-caption text-grey-7" v-if="row.studioDentale">{{ row.studioDentale }}</div>
+            </div>
+          </template>
+          <template #mobile-cell-indirizzo="{ row }">
+            {{ formatAddress(row) }}
+          </template>
+          <template #mobile-cell-azioni="{ row }">
+            <div class="q-gutter-xs">
+              <q-btn dense flat round icon="edit" color="primary" @click="openEdit(row)" />
+              <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(row)" />
+            </div>
+          </template>
+        </ResponsiveTable>
       </q-card-section>
     </q-card>
 
@@ -54,6 +78,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { useImplantologiaClientiStore } from 'src/stores/implantologiaClientiStore.js'
 import ModaleCliente from 'src/components/implantologia/ModaleCliente.vue'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const $q = useQuasar()
 const store = useImplantologiaClientiStore()

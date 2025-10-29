@@ -24,17 +24,17 @@
       <q-separator />
 
       <q-card-section>
-        <q-table :rows="filteredFatture" :columns="columns" row-key="id" flat bordered :loading="store.loading"
-          no-data-label="Nessuna fattura presente" rows-per-page-label="Fatture per pagina" :pagination="pagination">
-          <template #body-cell-totale="props">
-            <q-td :props="props">{{ formatCurrency(props.row.totale) }}</q-td>
-          </template>
-          <template #body-cell-imponibile="props">
-            <q-td :props="props">{{ formatCurrency(props.row.imponibile) }}</q-td>
-          </template>
-          <template #body-cell-iva="props">
-            <q-td :props="props">{{ formatCurrency(props.row.iva) }}</q-td>
-          </template>
+        <ResponsiveTable
+          :rows="filteredFatture"
+          :columns="columns"
+          row-key="id"
+          flat
+          bordered
+          :loading="store.loading"
+          no-data-label="Nessuna fattura presente"
+          rows-per-page-label="Fatture per pagina"
+          :pagination="pagination"
+        >
           <template #body-cell-collegamenti="props">
             <q-td :props="props">
               <div class="column">
@@ -50,7 +50,20 @@
               <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(props.row)" />
             </q-td>
           </template>
-        </q-table>
+          <template #mobile-cell-collegamenti="{ row }">
+            <div class="column items-end">
+              <span v-if="row.venditaId">Vendita #{{ row.venditaId }}</span>
+              <span v-if="row.acquistoId">Acquisto #{{ row.acquistoId }}</span>
+              <span v-if="!row.venditaId && !row.acquistoId" class="text-grey-6">-</span>
+            </div>
+          </template>
+          <template #mobile-cell-azioni="{ row }">
+            <div class="q-gutter-xs">
+              <q-btn dense flat round icon="edit" color="primary" @click="openEdit(row)" />
+              <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(row)" />
+            </div>
+          </template>
+        </ResponsiveTable>
       </q-card-section>
     </q-card>
 
@@ -69,6 +82,7 @@ import { useImplantologiaFornitoriStore } from 'src/stores/implantologiaFornitor
 import { useImplantologiaVenditeStore } from 'src/stores/implantologiaVenditeStore.js'
 import { useImplantologiaAcquistiStore } from 'src/stores/implantologiaAcquistiStore.js'
 import ModaleFattura from 'src/components/implantologia/ModaleFattura.vue'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const $q = useQuasar()
 const store = useImplantologiaFattureStore()
@@ -98,9 +112,9 @@ const columns = [
   { name: 'data', label: 'Data', align: 'left', field: row => formatDate(row.data), sortable: true },
   { name: 'tipo', label: 'Tipo', align: 'left', field: 'tipo' },
   { name: 'stato', label: 'Stato', align: 'left', field: 'stato' },
-  { name: 'totale', label: 'Totale', align: 'right', field: 'totale' },
-  { name: 'imponibile', label: 'Imponibile', align: 'right', field: 'imponibile' },
-  { name: 'iva', label: 'IVA', align: 'right', field: 'iva' },
+  { name: 'totale', label: 'Totale', align: 'right', field: 'totale', format: val => formatCurrency(val) },
+  { name: 'imponibile', label: 'Imponibile', align: 'right', field: 'imponibile', format: val => formatCurrency(val) },
+  { name: 'iva', label: 'IVA', align: 'right', field: 'iva', format: val => formatCurrency(val) },
   { name: 'cliente', label: 'Cliente', align: 'left', field: row => getClienteNome(row.clienteDentaleId) },
   { name: 'fornitore', label: 'Fornitore', align: 'left', field: row => getFornitoreNome(row.fornitoreId) },
   { name: 'collegamenti', label: 'Collegamenti', align: 'left', field: row => row.venditaId || row.acquistoId },

@@ -23,15 +23,17 @@
         <q-separator />
 
         <q-card-section>
-          <q-table :rows="filteredMovimenti" :columns="columns" row-key="id" flat bordered :loading="store.loading"
-            no-data-label="Nessun movimento registrato" rows-per-page-label="Movimenti per pagina" :pagination="pagination">
-            <template #body-cell-prezzoUnitario="props">
-              <q-td :props="props">{{ formatCurrency(props.row.prezzoUnitario) }}</q-td>
-            </template>
-            <template #body-cell-dataMovimento="props">
-              <q-td :props="props">{{ formatDateTime(props.row.dataMovimento) }}</q-td>
-            </template>
-          </q-table>
+          <ResponsiveTable
+            :rows="filteredMovimenti"
+            :columns="columns"
+            row-key="id"
+            flat
+            bordered
+            :loading="store.loading"
+            no-data-label="Nessun movimento registrato"
+            rows-per-page-label="Movimenti per pagina"
+            :pagination="pagination"
+          />
         </q-card-section>
       </q-card>
 
@@ -40,9 +42,17 @@
           <div class="text-subtitle1 text-weight-medium">Giacenze attuali</div>
         </q-card-section>
         <q-card-section>
-          <q-table :rows="store.giacenze" :columns="columnsGiacenze" row-key="prodottoId" flat bordered :loading="store.loading"
-            no-data-label="Nessuna giacenza disponibile" rows-per-page-label="Prodotti per pagina"
-            :pagination="paginationGiacenze" />
+          <ResponsiveTable
+            :rows="store.giacenze"
+            :columns="columnsGiacenze"
+            row-key="prodottoId"
+            flat
+            bordered
+            :loading="store.loading"
+            no-data-label="Nessuna giacenza disponibile"
+            rows-per-page-label="Prodotti per pagina"
+            :pagination="paginationGiacenze"
+          />
         </q-card-section>
       </q-card>
     </div>
@@ -54,6 +64,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useImplantologiaMagazzinoStore } from 'src/stores/implantologiaMagazzinoStore.js'
 import { useImplantologiaProdottiStore } from 'src/stores/implantologiaProdottiStore.js'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const store = useImplantologiaMagazzinoStore()
 const prodottiStore = useImplantologiaProdottiStore()
@@ -70,12 +81,12 @@ const tipiMovimento = [
 ]
 
 const columns = [
-  { name: 'dataMovimento', label: 'Data', align: 'left', field: 'dataMovimento', sortable: true },
+  { name: 'dataMovimento', label: 'Data', align: 'left', field: 'dataMovimento', sortable: true, format: val => formatDateTime(val) },
   { name: 'tipo', label: 'Tipo', align: 'left', field: 'tipo' },
   { name: 'prodotto', label: 'Prodotto', align: 'left', field: 'prodottoNome' },
   { name: 'categoria', label: 'Categoria', align: 'left', field: row => getCategoria(row.prodottoId) },
   { name: 'quantita', label: 'Quantità', align: 'right', field: 'quantita' },
-  { name: 'prezzoUnitario', label: 'Prezzo unitario', align: 'right', field: 'prezzoUnitario' },
+  { name: 'prezzoUnitario', label: 'Prezzo unitario', align: 'right', field: 'prezzoUnitario', format: val => formatCurrency(val) },
   { name: 'note', label: 'Note', align: 'left', field: 'note' }
 ]
 

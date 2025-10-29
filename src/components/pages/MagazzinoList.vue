@@ -55,12 +55,24 @@
         <strong>{{ formatQuantita(magazzinoStore.giacenzaCorrente) }}</strong>
       </q-banner>
 
-      <q-table v-if="!$q.screen.lt.sm" :rows="magazzinoStore.movimenti" :columns="columns" row-key="id" flat bordered
-        separator="horizontal" color="pink-8"
-        class="responsive-elegant-table q-table--horizontal-separator q-table--responsive" :loading="loading"
-        :rows-number="rowsNumber" v-model:pagination="pagination" no-data-label="Nessun movimento trovato."
-        rows-per-page-label="Movimenti per pagina:" loading-label="Caricamento movimenti..."
-        no-results-label="Nessun movimento trovato." @request="onRequest">
+      <ResponsiveTable
+        :rows="magazzinoStore.movimenti"
+        :columns="columns"
+        row-key="id"
+        flat
+        bordered
+        separator="horizontal"
+        color="pink-8"
+        class="responsive-elegant-table q-table--horizontal-separator q-table--responsive"
+        :loading="loading"
+        :rows-number="rowsNumber"
+        v-model:pagination="pagination"
+        no-data-label="Nessun movimento trovato."
+        rows-per-page-label="Movimenti per pagina:"
+        loading-label="Caricamento movimenti..."
+        no-results-label="Nessun movimento trovato."
+        @request="onRequest"
+      >
         <template #top-right>
           <q-btn-dropdown color="pink-8" label="Registra movimento" icon="add_circle"
             class="q-px-md q-py-sm text-weight-bold" rounded>
@@ -117,36 +129,24 @@
             </q-td>
           </q-tr>
         </template>
-      </q-table>
 
-      <div v-else class="q-gutter-md">
-        <div class="row q-py-md justify-center">
-          <q-btn color="pink-8" icon="add_circle" label="Registra movimento" class="q-px-md q-py-sm text-weight-bold"
-            rounded @click="openMovimentoDialog('ORDINATO')" />
-        </div>
-
-        <q-card v-for="movimento in magazzinoStore.movimenti" :key="movimento.id" class="q-pa-sm">
-          <q-card-section class="row items-center justify-between">
-            <div>
-              <div class="text-subtitle1 text-weight-bold">{{ movimento.nomeProdotto || 'Prodotto' }}</div>
-              <div class="text-caption text-grey-7">{{ formatDateTime(movimento.dataMovimento) }}</div>
-            </div>
-            <q-chip dense :color="getTipoColor(movimento.tipo)" text-color="white" class="text-weight-bold">
-              {{ formatTipo(movimento.tipo) }}
-            </q-chip>
-          </q-card-section>
-          <q-separator />
-          <q-card-section>
-            <div><strong>Quantità:</strong> {{ formatQuantita(movimento.quantita) }}</div>
-            <div><strong>Marca:</strong> {{ movimento.marcaProdotto || '-' }}</div>
-            <div><strong>Descrizione:</strong> {{ movimento.descrizione || '-' }}</div>
-          </q-card-section>
-          <q-card-actions align="right" class="q-pt-none">
-            <q-btn v-if="isOrdinato(movimento)" color="pink-8" flat icon="done_all" label="Segna come consegnato"
-              rounded @click="openCambioStatoDialog(movimento)" />
-          </q-card-actions>
-        </q-card>
-      </div>
+        <template #mobile-cell-tipo="{ row }">
+          <q-chip dense :color="getTipoColor(row.tipo)" text-color="white" class="text-weight-bold">
+            {{ formatTipo(row.tipo) }}
+          </q-chip>
+        </template>
+        <template #mobile-cell-azioni="{ row }">
+          <div class="flex justify-end">
+            <q-btn v-if="isOrdinato(row)" dense round flat color="pink-8" icon="done_all"
+              @click="openCambioStatoDialog(row)">
+              <q-tooltip anchor="top middle" self="bottom middle">Segna come consegnato</q-tooltip>
+            </q-btn>
+            <q-icon v-else name="block" color="grey-5" size="sm">
+              <q-tooltip anchor="top middle" self="bottom middle">Nessuna azione disponibile</q-tooltip>
+            </q-icon>
+          </div>
+        </template>
+      </ResponsiveTable>
     </q-card>
 
     <magazzino-movimento-dialog v-model="movimentoDialogVisible" :tipo="movimentoDialogTipo"
@@ -180,6 +180,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useMagazzinoStore, useProdottiStore } from 'src/components/stores'
 import MagazzinoMovimentoDialog from 'src/components/modals/MagazzinoMovimentoDialog.vue'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const magazzinoStore = useMagazzinoStore()
 const prodottiStore = useProdottiStore()

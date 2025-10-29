@@ -32,9 +32,7 @@
         </div>
       </div>
 
-      <!-- Desktop table (server-side) -->
-      <q-table
-        v-if="!$q.screen.lt.sm"
+      <ResponsiveTable
         :rows="clientiStore.clienti"
         :columns="columns"
         row-key="id"
@@ -80,32 +78,17 @@
           </q-tr>
         </template>
 
-        <template v-slot:top-right>
+        <template #top-right>
           <q-btn color="pink-8" icon="add_circle" label="Aggiungi Cliente" class="q-px-md q-py-sm text-weight-bold"
             rounded @click="showAddClientModal = true" />
         </template>
-      </q-table>
 
-      <!-- Mobile cards (usa dati caricati dal server) -->
-      <div v-else class="q-gutter-md">
-        <div class="row q-py-md justify-center ">
-          <q-btn color="pink-8" icon="add_circle" label="Aggiungi Cliente" class="q-px-md q-py-sm text-weight-bold"
-            rounded @click="showAddClientModal = true" />
-        </div>
-        <q-card v-for="row in clientiStore.clienti" :key="row.id" class="q-pa-sm">
-          <q-card-section class="row items-center justify-between">
-            <div class="text-h6">{{ row.nome }} {{ row.cognome }}</div>
-            <q-btn dense round flat icon="more_vert" color="primary" @click="openMenu(row, $event)">
-              <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
-            </q-btn>
-          </q-card-section>
-          <q-separator />
-          <q-card-section>
-            <div><strong>Data ultimo ordine:</strong> {{ row.dataUltimoOrdine || '-' }}</div>
-            <div><strong>Note:</strong> {{ row.note || '-' }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
+        <template #mobile-cell-azioni="{ row }">
+          <q-btn dense round flat icon="more_vert" color="primary" @click="openMenu(row, $event)">
+            <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
+          </q-btn>
+        </template>
+      </ResponsiveTable>
     </q-card>
 
     <q-menu v-model="menuVisible" :target="menuAnchor" @hide="closeMenu" ref="dynamicMenuRef" class="rounded-menu">
@@ -170,6 +153,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClientiStore } from 'src/components/stores/index.js'
 import { useQuasar } from 'quasar'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const router = useRouter()
 const clientiStore = useClientiStore()
@@ -177,11 +161,11 @@ const $q = useQuasar()
 
 // Colonne della tabella
 const columns = [
-  { name: 'nome', label: 'Nome', field: 'nome', align: 'left', sortable: true },
-  { name: 'cognome', label: 'Cognome', field: 'cognome', align: 'left', sortable: true },
-  { name: 'dataNascita', label: 'Data di Nascita', field: 'dataNascita', align: 'left', sortable: true },
-  { name: 'note', label: 'Note', field: 'note', align: 'left', style: 'max-width: 250px; white-space: normal;' },
-  { name: 'dataUltimoOrdine', label: 'Ultimo Ordine', field: 'dataUltimoOrdine', align: 'left', sortable: true },
+  { name: 'nome', label: 'Nome', field: row => row.nome || '-', align: 'left', sortable: true },
+  { name: 'cognome', label: 'Cognome', field: row => row.cognome || '-', align: 'left', sortable: true },
+  { name: 'dataNascita', label: 'Data di Nascita', field: row => row.dataNascita || '-', align: 'left', sortable: true },
+  { name: 'note', label: 'Note', field: row => row.note || '-', align: 'left', style: 'max-width: 250px; white-space: normal;' },
+  { name: 'dataUltimoOrdine', label: 'Ultimo Ordine', field: row => row.dataUltimoOrdine || '-', align: 'left', sortable: true },
   { name: 'azioni', label: 'Azioni', align: 'center' }
 ]
 

@@ -25,12 +25,21 @@
       </div>
 
       <q-separator />
-      <!-- Tabella desktop -->
-      <q-table v-if="!$q.screen.lt.sm" :rows="serviziStore.servizi" :columns="columns" row-key="idServizio" flat
-        bordered color="pink-8" class="responsive-elegant-table q-table--horizontal-separator q-table--responsive"
-        v-model:pagination="pagination" :rows-number="rowsNumber" :loading="serviziStore.loading"
-        no-data-label="Nessun servizio trovato." rows-per-page-label="Servizi per pagina:" @request="onRequest">
-
+      <ResponsiveTable
+        :rows="serviziStore.servizi"
+        :columns="columns"
+        row-key="idServizio"
+        flat
+        bordered
+        color="pink-8"
+        class="responsive-elegant-table q-table--horizontal-separator q-table--responsive"
+        v-model:pagination="pagination"
+        :rows-number="rowsNumber"
+        :loading="serviziStore.loading"
+        no-data-label="Nessun servizio trovato."
+        rows-per-page-label="Servizi per pagina:"
+        @request="onRequest"
+      >
         <template #top-right>
           <q-btn color="pink-8" icon="add_circle" label="Aggiungi Servizio" class="q-px-md q-py-sm text-weight-bold"
             rounded @click="openModal()" />
@@ -61,31 +70,13 @@
             </q-td>
           </q-tr>
         </template>
-      </q-table>
 
-      <!-- Cards mobile -->
-      <div v-else class="q-gutter-md">
-        <div class="row q-py-md justify-center ">
-          <q-btn color="pink-8" icon="add_circle" label="Aggiungi Servizio" class="q-px-md q-py-sm text-weight-bold"
-            rounded @click="openModal()" />
-        </div>
-        <q-card v-for="servizio in serviziStore.servizi" :key="servizio.idServizio" class="q-pa-sm" clickable
-          @click="openMenu(servizio, $event)">
-          <q-card-section class="row items-center justify-between">
-            <div><strong># Servizio:</strong> {{ servizio.idServizio || '-' }}</div>
-            <q-btn dense round flat icon="more_vert" color="primary" @click.stop="openMenu(servizio, $event)">
-              <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
-            </q-btn>
-          </q-card-section>
-          <q-separator />
-          <q-card-section>
-            <div><strong>Nome:</strong> {{ servizio.nome || '-' }}</div>
-            <div><strong>Descrizione:</strong> {{ servizio.descrizione || '-' }}</div>
-            <div><strong>Prezzo:</strong> € {{ servizio.prezzoBase != null ? servizio.prezzoBase.toFixed(2) : '-' }}
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+        <template #mobile-cell-azioni="{ row }">
+          <q-btn dense round flat icon="more_vert" color="primary" @click="openMenu(row, $event)">
+            <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
+          </q-btn>
+        </template>
+      </ResponsiveTable>
     </q-card>
 
     <!-- MENU AZIONI -->
@@ -140,6 +131,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useServiziStore } from 'src/components/stores/index.js'
 import { useQuasar } from 'quasar'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const serviziStore = useServiziStore()
 const { servizioCorrente } = storeToRefs(serviziStore)
@@ -164,9 +156,15 @@ const pagination = ref({
 const rowsNumber = ref(0)
 
 const columns = [
-  { name: 'nome', label: 'Nome', field: 'nome', align: 'left' },
-  { name: 'descrizione', label: 'Descrizione', field: 'descrizione', align: 'left' },
-  { name: 'prezzoBase', label: 'Prezzo Base', field: 'prezzoBase', align: 'left', format: val => `€ ${val}` },
+  { name: 'nome', label: 'Nome', field: row => row.nome || '-', align: 'left' },
+  { name: 'descrizione', label: 'Descrizione', field: row => row.descrizione || '-', align: 'left' },
+  {
+    name: 'prezzoBase',
+    label: 'Prezzo Base',
+    field: row => row.prezzoBase,
+    align: 'left',
+    format: val => (val != null ? `€ ${Number(val).toFixed(2)}` : '-')
+  },
   { name: 'azioni', label: 'Azioni', align: 'center', field: 'id', sortable: false }
 ]
 

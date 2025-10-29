@@ -33,8 +33,17 @@
       <q-separator />
 
       <q-card-section>
-        <q-table :rows="filteredVendite" :columns="columns" row-key="id" flat bordered :loading="store.loading"
-          no-data-label="Nessuna vendita registrata" rows-per-page-label="Vendite per pagina" :pagination="pagination">
+        <ResponsiveTable
+          :rows="filteredVendite"
+          :columns="columns"
+          row-key="id"
+          flat
+          bordered
+          :loading="store.loading"
+          no-data-label="Nessuna vendita registrata"
+          rows-per-page-label="Vendite per pagina"
+          :pagination="pagination"
+        >
           <template #body-cell-dettagli="props">
             <q-td :props="props">
               <div v-for="det in props.row.dettagli" :key="`${props.row.id}-${det.prodottoId}`" class="text-caption">
@@ -49,7 +58,21 @@
               <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(props.row)" />
             </q-td>
           </template>
-        </q-table>
+          <template #mobile-cell-dettagli="{ row }">
+            <div class="column items-end">
+              <div v-for="det in row.dettagli" :key="`${row.id}-${det.prodottoId}`" class="text-caption">
+                {{ det.quantita }}× {{ det.prodottoNome }} · {{ formatCurrency(det.prezzoUnitario) }}
+              </div>
+              <span v-if="!row.dettagli?.length" class="text-grey-6">-</span>
+            </div>
+          </template>
+          <template #mobile-cell-azioni="{ row }">
+            <div class="q-gutter-xs">
+              <q-btn dense flat round icon="edit" color="primary" @click="openEdit(row)" />
+              <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(row)" />
+            </div>
+          </template>
+        </ResponsiveTable>
       </q-card-section>
     </q-card>
 
@@ -66,6 +89,7 @@ import { useImplantologiaClientiStore } from 'src/stores/implantologiaClientiSto
 import { useImplantologiaProdottiStore } from 'src/stores/implantologiaProdottiStore.js'
 import { useImplantologiaListiniStore } from 'src/stores/implantologiaListiniStore.js'
 import ModaleVendita from 'src/components/implantologia/ModaleVendita.vue'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const $q = useQuasar()
 const store = useImplantologiaVenditeStore()

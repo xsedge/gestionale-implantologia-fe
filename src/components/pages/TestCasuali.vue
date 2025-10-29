@@ -45,14 +45,22 @@
               <div class="text-h6 text-primary">Servizi Più Richiesti</div>
               <q-btn dense flat round icon="refresh" color="primary" label="Aggiorna" @click="loadServizi" />
             </div>
-            <q-table :rows="servizi" :columns="columnsServizi" row-key="idServizio" :loading="loadingServizi" flat dense
-              no-data-label="Nessun dato disponibile" loading-label="Caricamento servizi...">
-              <template v-slot:loading>
+            <ResponsiveTable
+              :rows="servizi"
+              :columns="columnsServizi"
+              row-key="idServizio"
+              :loading="loadingServizi"
+              flat
+              dense
+              no-data-label="Nessun dato disponibile"
+              loading-label="Caricamento servizi..."
+            >
+              <template #loading>
                 <div class="row justify-center q-pa-md">
                   <q-spinner-dots color="primary" size="40px" />
                 </div>
               </template>
-            </q-table>
+            </ResponsiveTable>
           </q-card>
         </q-tab-panel>
 
@@ -95,14 +103,22 @@
               <div class="text-h6 text-primary">Durata Media Servizi (minuti)</div>
               <q-btn dense flat round icon="refresh" color="primary" label="Aggiorna" @click="loadDurata" />
             </div>
-            <q-table :rows="durata" :columns="columnsDurata" row-key="idServizio" :loading="loadingDurata" flat dense
-              no-data-label="Nessun dato disponibile" loading-label="Caricamento durata...">
-              <template v-slot:loading>
+            <ResponsiveTable
+              :rows="durata"
+              :columns="columnsDurata"
+              row-key="idServizio"
+              :loading="loadingDurata"
+              flat
+              dense
+              no-data-label="Nessun dato disponibile"
+              loading-label="Caricamento durata..."
+            >
+              <template #loading>
                 <div class="row justify-center q-pa-md">
                   <q-spinner-dots color="primary" size="40px" />
                 </div>
               </template>
-            </q-table>
+            </ResponsiveTable>
           </q-card>
         </q-tab-panel>
 
@@ -113,15 +129,22 @@
               <div class="text-h6 text-primary">Produttività Operatore</div>
               <q-btn dense flat round icon="refresh" color="primary" label="Aggiorna" @click="loadProduttivita" />
             </div>
-            <q-table :rows="produttivita" :columns="columnsProduttivita" row-key="eseguitoDa"
-              :loading="loadingProduttivita" flat dense no-data-label="Nessun dato disponibile"
-              loading-label="Caricamento produttività...">
-              <template v-slot:loading>
+            <ResponsiveTable
+              :rows="produttivita"
+              :columns="columnsProduttivita"
+              row-key="eseguitoDa"
+              :loading="loadingProduttivita"
+              flat
+              dense
+              no-data-label="Nessun dato disponibile"
+              loading-label="Caricamento produttività..."
+            >
+              <template #loading>
                 <div class="row justify-center q-pa-md">
                   <q-spinner-dots color="primary" size="40px" />
                 </div>
               </template>
-            </q-table>
+            </ResponsiveTable>
           </q-card>
         </q-tab-panel>
 

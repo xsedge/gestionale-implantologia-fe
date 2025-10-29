@@ -24,15 +24,30 @@
       <q-separator />
 
       <q-card-section>
-        <q-table :rows="filteredFornitori" :columns="columns" row-key="id" flat bordered :loading="store.loading"
-          no-data-label="Nessun fornitore trovato" rows-per-page-label="Fornitori per pagina" :pagination="pagination">
+        <ResponsiveTable
+          :rows="filteredFornitori"
+          :columns="columns"
+          row-key="id"
+          flat
+          bordered
+          :loading="store.loading"
+          no-data-label="Nessun fornitore trovato"
+          rows-per-page-label="Fornitori per pagina"
+          :pagination="pagination"
+        >
           <template #body-cell-azioni="props">
             <q-td :props="props">
               <q-btn dense flat round icon="edit" color="primary" @click="openEdit(props.row)" />
               <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(props.row)" />
             </q-td>
           </template>
-        </q-table>
+          <template #mobile-cell-azioni="{ row }">
+            <div class="q-gutter-xs">
+              <q-btn dense flat round icon="edit" color="primary" @click="openEdit(row)" />
+              <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(row)" />
+            </div>
+          </template>
+        </ResponsiveTable>
       </q-card-section>
     </q-card>
 
@@ -45,6 +60,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { useImplantologiaFornitoriStore } from 'src/stores/implantologiaFornitoriStore.js'
 import ModaleFornitore from 'src/components/implantologia/ModaleFornitore.vue'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const $q = useQuasar()
 const store = useImplantologiaFornitoriStore()

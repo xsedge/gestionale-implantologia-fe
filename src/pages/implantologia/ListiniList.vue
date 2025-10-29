@@ -25,8 +25,17 @@
       <q-separator />
 
       <q-card-section>
-        <q-table :rows="filteredListini" :columns="columns" row-key="id" flat bordered :loading="store.loading"
-          no-data-label="Nessun listino configurato" rows-per-page-label="Listini per pagina" :pagination="pagination">
+        <ResponsiveTable
+          :rows="filteredListini"
+          :columns="columns"
+          row-key="id"
+          flat
+          bordered
+          :loading="store.loading"
+          no-data-label="Nessun listino configurato"
+          rows-per-page-label="Listini per pagina"
+          :pagination="pagination"
+        >
           <template #body-cell-prodotti="props">
             <q-td :props="props">
               <div class="text-caption" v-for="prod in props.row.prodotti" :key="`${props.row.id}-${prod.prodottoId}`">
@@ -41,7 +50,21 @@
               <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(props.row)" />
             </q-td>
           </template>
-        </q-table>
+          <template #mobile-cell-prodotti="{ row }">
+            <div class="column items-end">
+              <div class="text-caption" v-for="prod in row.prodotti" :key="`${row.id}-${prod.prodottoId}`">
+                {{ getProdottoNome(prod.prodottoId) }} · {{ formatCurrency(prod.prezzoScontato || prod.prezzoBase) }}
+              </div>
+              <span v-if="!row.prodotti?.length" class="text-grey-6">-</span>
+            </div>
+          </template>
+          <template #mobile-cell-azioni="{ row }">
+            <div class="q-gutter-xs">
+              <q-btn dense flat round icon="edit" color="primary" @click="openEdit(row)" />
+              <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(row)" />
+            </div>
+          </template>
+        </ResponsiveTable>
       </q-card-section>
     </q-card>
 
@@ -57,6 +80,7 @@ import { useImplantologiaListiniStore } from 'src/stores/implantologiaListiniSto
 import { useImplantologiaFornitoriStore } from 'src/stores/implantologiaFornitoriStore.js'
 import { useImplantologiaProdottiStore } from 'src/stores/implantologiaProdottiStore.js'
 import ModaleListino from 'src/components/implantologia/ModaleListino.vue'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const $q = useQuasar()
 const store = useImplantologiaListiniStore()

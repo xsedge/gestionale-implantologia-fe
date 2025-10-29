@@ -26,12 +26,23 @@
       </div>
 
 
-      <!-- Tabella visibile solo su desktop -->
-      <q-table v-if="!$q.screen.lt.sm" :rows="ordiniStore.ordini" :columns="columns" row-key="id" flat bordered
-        color="pink-8" v-model:pagination="pagination" :rows-number="rowsNumber" no-data-label="Nessun ordine trovato."
-        rows-per-page-label="Ordini per pagina:" :loading="ordiniStore.loading" loading-label="Caricamento ordini..."
-        no-results-label="Nessun ordine trovato." @request="onRequest"
-        class="responsive-elegant-table q-table--horizontal-separator q-table--responsive">
+      <ResponsiveTable
+        :rows="ordiniStore.ordini"
+        :columns="columns"
+        row-key="id"
+        flat
+        bordered
+        color="pink-8"
+        v-model:pagination="pagination"
+        :rows-number="rowsNumber"
+        no-data-label="Nessun ordine trovato."
+        rows-per-page-label="Ordini per pagina:"
+        :loading="ordiniStore.loading"
+        loading-label="Caricamento ordini..."
+        no-results-label="Nessun ordine trovato."
+        @request="onRequest"
+        class="responsive-elegant-table q-table--horizontal-separator q-table--responsive"
+      >
         <template #header="props">
           <q-tr :props="props">
             <q-th v-for="col in props.cols" :key="col.name" :props="props"
@@ -63,33 +74,13 @@
           <q-btn color="pink-8" icon="add_circle" label="Aggiungi Ordine" class="q-px-md q-py-sm text-weight-bold"
             rounded @click="apriNuovoOrdine" />
         </template>
-      </q-table>
 
-      <!-- Cards visibili solo su mobile -->
-      <div v-else class="q-gutter-md">
-        <div class="row q-py-md justify-center ">
-          <q-btn color="pink-8" icon="add_circle" label="Aggiungi Ordine" class="q-px-md q-py-sm text-weight-bold"
-            rounded @click="apriNuovoOrdine" />
-        </div>
-        <q-card v-for="ordine in ordiniStore.ordini" :key="ordine.id" class="q-pa-sm">
-          <q-card-section>
-            <div><strong># Ordine:</strong> {{ ordine.id || '-' }}</div>
-            <div><strong>Data ordine:</strong> {{ formattaDataItaliano(ordine.data) || '-' }}</div>
-          </q-card-section>
-          <q-card-section class="row items-center justify-between">
-            <div class="text-h6">{{ ordine.cliente.nome }} {{ ordine.cliente.cognome }}</div>
-            <q-btn dense round flat icon="more_vert" color="primary" @click="openMenu(ordine, $event)">
-              <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
-            </q-btn>
-          </q-card-section>
-          <q-card-section>
-            <div><strong>Numero servizi associato/i:</strong> {{ ordine.nserviziAssociati || '-' }}</div>
-            <div><strong>Prezzo totale:</strong> {{ ordine.prezzoTotale ? `€ ${ordine.prezzoTotale.toFixed(2)}` : '-' }}
-            </div>
-            <div><strong>Note:</strong> {{ ordine.note || '-' }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
+        <template #mobile-cell-azioni="{ row }">
+          <q-btn dense round flat icon="more_vert" color="primary" @click="openMenu(row, $event)">
+            <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
+          </q-btn>
+        </template>
+      </ResponsiveTable>
 
     </q-card>
 
@@ -135,6 +126,7 @@ import { useOrdiniStore } from 'src/components/stores/index.js'
 import OrdineDetail from './OrdineDetail.vue'
 import ModaleNuovoOrdine from 'src/components/ModaleNuovoOrdine.vue'
 import { formattaDataItaliano } from 'src/utils/MethodUtils'
+import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
 const $q = useQuasar()
 const ordiniStore = useOrdiniStore()
@@ -164,8 +156,20 @@ const rowsNumber = ref(0)
 const columns = [
   { name: 'id', label: 'ID', field: 'id', align: 'left', sortable: true },
   { name: 'data', label: 'Data', field: row => formattaDataItaliano(row.data), align: 'left', sortable: true },
-  { name: 'cliente', label: 'Cliente', field: row => (row.cliente?.nome ?? '') + ' ' + (row.cliente?.cognome ?? ''), align: 'left', sortable: true },
-  { name: 'prezzoTotale', label: 'Prezzo', field: row => row.prezzoTotale ? `€ ${row.prezzoTotale.toFixed(2)}` : '-', align: 'left', sortable: true },
+  {
+    name: 'cliente',
+    label: 'Cliente',
+    field: row => `${row.cliente?.nome ?? ''} ${row.cliente?.cognome ?? ''}`.trim() || '-',
+    align: 'left',
+    sortable: true
+  },
+  {
+    name: 'prezzoTotale',
+    label: 'Prezzo',
+    field: row => (row.prezzoTotale ? `€ ${row.prezzoTotale.toFixed(2)}` : '-'),
+    align: 'left',
+    sortable: true
+  },
   { name: 'azioni', label: 'Azioni', align: 'center' }
 ]
 

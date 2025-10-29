@@ -17,19 +17,26 @@
                 <!-- Tab: Prodotti -->
                 <q-tab-panel name="prodotti">
 
-                    <!-- Tabella visibile solo desktop -->
-                    <q-table v-if="!$q.screen.lt.sm" :rows="store.prodotti" :columns="columnsProdotti" row-key="id" flat
-                        bordered color="pink-8"
+                    <ResponsiveTable
+                        :rows="store.prodotti"
+                        :columns="columnsProdotti"
+                        row-key="id"
+                        flat
+                        bordered
+                        color="pink-8"
                         class="responsive-elegant-table q-table--horizontal-separator q-table--responsive"
-                        :pagination="{ rowsPerPage: 10 }" :loading="store.loading"
-                        no-data-label="Nessun prodotto trovato." rows-per-page-label="Prodotti per pagina:">
+                        :pagination="{ rowsPerPage: 10 }"
+                        :loading="store.loading"
+                        no-data-label="Nessun prodotto trovato."
+                        rows-per-page-label="Prodotti per pagina:"
+                    >
                         <template #top-right>
                             <q-btn color="pink-8" icon="add_circle" label="Aggiungi Prodotto"
                                 class="q-px-md q-py-sm text-weight-bold" rounded @click="openDialog('prodotto')" />
                         </template>
 
                         <template #header="props">
-                            <q-tr :props="props" v-if="!$q.screen.lt.sm">
+                            <q-tr :props="props">
                                 <q-th v-for="col in props.cols" :key="col.name" :props="props"
                                     class="text-uppercase text-weight-bold bg-pink-1 text-pink-9 custom-header-cell"
                                     :style="{ padding: '12px 16px', fontSize: '14px' }">
@@ -55,47 +62,38 @@
                                 </q-td>
                             </q-tr>
                         </template>
-                    </q-table>
 
-                    <!-- Cards visibili solo mobile -->
-                    <div v-else class="q-gutter-md">
-                        <div class="row q-py-md justify-center ">
-                            <q-btn color="pink-8" icon="add_circle" label="Aggiungi Prodotto"
-                                class="q-px-md q-py-sm text-weight-bold" rounded @click="openDialog('prodotto')" />
-                        </div>
-                        <q-card v-for="prodotto in store.prodotti" :key="prodotto.id" class="q-pa-sm">
-                            <q-card-section class="row items-center justify-between">
-                                <div><strong># Prodotto:</strong> {{ prodotto.id || '-' }}</div>
-                                <q-btn dense round flat icon="more_vert" color="primary"
-                                    @click="openMenu(prodotto, $event)">
-                                    <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
-                                </q-btn>
-                            </q-card-section>
-                            <q-separator />
-                            <q-card-section>
-                                <div><strong>Nome:</strong> {{ prodotto.nome || '-' }}</div>
-                                <div><strong>Marca:</strong> {{ prodotto.marca || '-' }}</div>
-                                <div><strong>Tipologia:</strong> {{ prodotto.codTipProdotto || '-' }}</div>
-                                <div><strong>Codice Colore:</strong> {{ prodotto.codiceColore || '-' }}</div>
-                            </q-card-section>
-                        </q-card>
-                    </div>
+                        <template #mobile-cell-azioni="{ row }">
+                            <q-btn dense round flat icon="more_vert" color="primary"
+                                @click="openMenu(row, $event)">
+                                <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
+                            </q-btn>
+                        </template>
+                    </ResponsiveTable>
                 </q-tab-panel>
 
                 <q-tab-panel name="tipologie">
                     <!-- Tabella visibile solo desktop -->
-                    <q-table v-if="!$q.screen.lt.sm" :rows="store.tipologieProdotto" :columns="columnsTipologie"
-                        row-key="id" flat bordered color="pink-8"
+                    <ResponsiveTable
+                        :rows="store.tipologieProdotto"
+                        :columns="columnsTipologie"
+                        row-key="id"
+                        flat
+                        bordered
+                        color="pink-8"
                         class="responsive-elegant-table q-table--horizontal-separator q-table--responsive"
-                        :pagination="{ rowsPerPage: 10 }" :loading="store.loading"
-                        no-data-label="Nessuna tipologia trovata." rows-per-page-label="Tipologie per pagina:">
+                        :pagination="{ rowsPerPage: 10 }"
+                        :loading="store.loading"
+                        no-data-label="Nessuna tipologia trovata."
+                        rows-per-page-label="Tipologie per pagina:"
+                    >
                         <template #top-right>
                             <q-btn color="pink-8" icon="add_circle" label="Aggiungi Tipologia"
                                 class="q-px-md q-py-sm text-weight-bold" rounded @click="openDialog('tipologia')" />
                         </template>
 
                         <template #header="props">
-                            <q-tr :props="props" v-if="!$q.screen.lt.sm">
+                            <q-tr :props="props">
                                 <q-th v-for="col in props.cols" :key="col.name" :props="props"
                                     class="text-uppercase text-weight-bold bg-pink-1 text-pink-9 custom-header-cell"
                                     :style="{ padding: '12px 16px', fontSize: '14px' }">
@@ -121,29 +119,14 @@
                                 </q-td>
                             </q-tr>
                         </template>
-                    </q-table>
 
-                    <!-- Cards visibili solo mobile -->
-                    <div v-else class="q-gutter-md">
-                        <div class="row q-py-md justify-center ">
-                            <q-btn color="pink-8" icon="add_circle" label="Aggiungi Tipologia"
-                                class="q-px-md q-py-sm text-weight-bold" rounded @click="openDialog('tipologia')" />
-                        </div>
-                        <q-card v-for="tipologia in store.tipologieProdotto" :key="tipologia.id" class="q-pa-sm"
-                            clickable @click="openMenu(tipologia, $event)">
-                            <q-card-section class="row items-center justify-between">
-                                <div><strong># Tipologia Prodotto:</strong> {{ tipologia.id || '-' }}</div>
-                                <q-btn dense round flat icon="more_vert" color="primary"
-                                    @click="openMenu(tipologia, $event)">
-                                    <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
-                                </q-btn>
-                            </q-card-section>
-                            <q-card-section>
-                                <div><strong>Codice Tipologia:</strong> {{ tipologia.codTipProdotto || '-' }}</div>
-                                <div><strong>Descrizione:</strong> {{ tipologia.descTipProdotto || '-' }}</div>
-                            </q-card-section>
-                        </q-card>
-                    </div>
+                        <template #mobile-cell-azioni="{ row }">
+                            <q-btn dense round flat icon="more_vert" color="primary"
+                                @click="openMenu(row, $event)">
+                                <q-tooltip anchor="top middle" self="bottom middle">Azioni</q-tooltip>
+                            </q-btn>
+                        </template>
+                    </ResponsiveTable>
                 </q-tab-panel>
 
             </q-tab-panels>
@@ -208,10 +191,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { useProdottiStore } from 'src/components/stores/index.js'
-import { computed } from 'vue'
+import ResponsiveTable from '../ResponsiveTable.vue'
 
 const $q = useQuasar()
 const store = useProdottiStore()
@@ -236,18 +219,18 @@ const form = ref({ id: null, nome: '', marca: '', codiceColore: '', idTipProdott
 const tipologieOptions = ref([])
 
 const columnsProdotti = [
-    { name: 'id', label: 'ID', field: 'id', align: 'left' },
-    { name: 'nome', label: 'Nome', field: 'nome', align: 'left' },
-    { name: 'marca', label: 'Marca', field: 'marca', align: 'left' },
-    { name: 'codiceColore', label: 'Codice Colore', field: 'codiceColore', align: 'left' },
-    { name: 'codTipProdotto', label: 'Nome Tipologia', field: 'codTipProdotto', align: 'left' },
+    { name: 'id', label: 'ID', field: row => row.id ?? '-', align: 'left' },
+    { name: 'nome', label: 'Nome', field: row => row.nome || '-', align: 'left' },
+    { name: 'marca', label: 'Marca', field: row => row.marca || '-', align: 'left' },
+    { name: 'codiceColore', label: 'Codice Colore', field: row => row.codiceColore || '-', align: 'left' },
+    { name: 'codTipProdotto', label: 'Nome Tipologia', field: row => row.codTipProdotto || '-', align: 'left' },
     { name: 'azioni', label: 'Azioni', align: 'center' }
 ]
 
 const columnsTipologie = [
-    { name: 'id', label: 'ID', field: 'id', align: 'left' },
-    { name: 'codTipProdotto', label: 'Nome Tipologia', field: 'codTipProdotto', align: 'left' },
-    { name: 'descTipProdotto', label: 'Descrizione', field: 'descTipProdotto', align: 'left' },
+    { name: 'id', label: 'ID', field: row => row.id ?? '-', align: 'left' },
+    { name: 'codTipProdotto', label: 'Nome Tipologia', field: row => row.codTipProdotto || '-', align: 'left' },
+    { name: 'descTipProdotto', label: 'Descrizione', field: row => row.descTipProdotto || '-', align: 'left' },
     { name: 'azioni', label: 'Azioni', align: 'center' }
 ]
 
