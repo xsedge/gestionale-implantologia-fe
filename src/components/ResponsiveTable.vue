@@ -17,8 +17,8 @@
       </template>
 
       <template v-if="isMobile" #item="props">
-        <div class="col-12 q-pa-xs">
-          <q-card flat bordered class="responsive-table__card">
+        <div class="col-12 q-pa-sm responsive-table__item">
+          <q-card flat bordered class="responsive-table__card q-pa-md">
             <q-card-section
               v-for="col in props.cols"
               :key="`${props.key}-${col.name}`"
@@ -138,10 +138,6 @@ function isColumnHidden(name) {
   background-color: white;
 }
 
-.responsive-table__card {
-  background: white;
-}
-
 .responsive-table__card-section {
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   padding: 12px 0;
@@ -153,5 +149,18 @@ function isColumnHidden(name) {
 
 .responsive-table__value :deep(.q-badge) {
   margin-left: auto;
+}
+
+.responsive-table__card {
+  border-radius: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.responsive-table__item:nth-of-type(odd) .responsive-table__card {
+  background: #f9fafb;
+}
+
+.responsive-table__item:nth-of-type(even) .responsive-table__card {
+  background: #ffffff;
 }
 </style>

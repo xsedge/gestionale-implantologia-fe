@@ -7,19 +7,27 @@
           <div class="text-subtitle2 text-white">Gestisci i fornitori specializzati.</div>
         </q-card-section>
 
-        <q-card-section class="q-gutter-md">
-          <q-input v-model="form.nome" label="Nome" dense outlined :rules="requiredRule" />
-          <q-input v-model="form.partitaIva" label="Partita IVA" dense outlined />
+        <q-card-section>
           <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-6">
+              <q-input v-model="form.nome" label="Nome" dense outlined :rules="requiredRule" />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input v-model="form.partitaIva" label="Partita IVA" dense outlined />
+            </div>
             <div class="col-12 col-md-6">
               <q-input v-model="form.email" label="Email" dense outlined type="email" />
             </div>
             <div class="col-12 col-md-6">
               <q-input v-model="form.telefono" label="Telefono" dense outlined />
             </div>
+            <div class="col-12">
+              <q-input v-model="form.indirizzo" label="Indirizzo" dense outlined />
+            </div>
+            <div class="col-12">
+              <q-input v-model="form.note" label="Note" type="textarea" dense outlined autogrow />
+            </div>
           </div>
-          <q-input v-model="form.indirizzo" label="Indirizzo" dense outlined />
-          <q-input v-model="form.note" label="Note" type="textarea" dense outlined autogrow />
         </q-card-section>
 
         <q-card-actions align="right">
