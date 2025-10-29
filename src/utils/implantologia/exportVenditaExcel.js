@@ -37,7 +37,21 @@ function buildCommissionSheet(vendita) {
   const merges = []
   let row = 0
 
-  const SECTION_FRAME_COLOR = '305496'
+  const SECTION_FRAME_DEFAULT_COLOR = '305496'
+  const SECTION_COLORS = {
+    anagrafica: {
+      frame: '2F75B5',
+      border: '6D9EEB'
+    },
+    prodotti: {
+      frame: 'C65911',
+      border: 'F4B183'
+    },
+    pagamento: {
+      frame: '548235',
+      border: 'A9D08E'
+    }
+  }
 
   function createBorder(style, color) {
     return {
@@ -48,8 +62,7 @@ function buildCommissionSheet(vendita) {
     }
   }
 
-  const BORDER_THIN = createBorder('thin', '777777')
-  const BORDER_MEDIUM = createBorder('medium', SECTION_FRAME_COLOR)
+  const BORDER_MEDIUM_DEFAULT = createBorder('medium', SECTION_FRAME_DEFAULT_COLOR)
 
   function encode(rowIndex, colIndex) {
     return XLSX.utils.encode_cell({ r: rowIndex, c: colIndex })
@@ -126,71 +139,81 @@ function buildCommissionSheet(vendita) {
   const sectionHeaderStyle = {
     font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } },
     alignment: { horizontal: 'left', vertical: 'center' },
-    border: BORDER_MEDIUM,
+    border: BORDER_MEDIUM_DEFAULT,
     fill: { fgColor: { rgb: '203864' } }
   }
-  const fieldLabelStyle = {
+  const anagraficaLabelStyle = {
     font: { bold: true, color: { rgb: '000000' } },
     alignment: { horizontal: 'left', vertical: 'center' },
-    border: BORDER_THIN,
+    border: createBorder('thin', SECTION_COLORS.anagrafica.border),
     fill: { fgColor: { rgb: 'F0F3F8' } }
   }
-  const fieldValueStyle = {
+  const anagraficaValueStyle = {
     alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
-    border: BORDER_THIN,
+    border: createBorder('thin', SECTION_COLORS.anagrafica.border),
     fill: { fgColor: { rgb: 'FFFFFF' } }
   }
   const tableHeaderStyle = {
     font: { bold: true, color: { rgb: '1F497D' } },
     alignment: { horizontal: 'center', vertical: 'center' },
-    border: BORDER_THIN,
+    border: createBorder('thin', SECTION_COLORS.prodotti.border),
     fill: { fgColor: { rgb: 'D9E2F3' } }
   }
   const tableTextStyle = {
     alignment: { horizontal: 'left', vertical: 'top', wrapText: true },
-    border: BORDER_THIN,
+    border: createBorder('thin', SECTION_COLORS.prodotti.border),
     fill: { fgColor: { rgb: 'FDFDFD' } }
   }
   const tableNumberStyle = {
     alignment: { horizontal: 'right', vertical: 'center' },
-    border: BORDER_THIN,
+    border: createBorder('thin', SECTION_COLORS.prodotti.border),
     fill: { fgColor: { rgb: 'FDFDFD' } }
   }
   const summaryLabelStyle = {
     font: { bold: true },
     alignment: { horizontal: 'right', vertical: 'center' },
-    border: BORDER_THIN,
+    border: createBorder('thin', SECTION_COLORS.pagamento.border),
     fill: { fgColor: { rgb: 'EDEDED' } }
   }
   const summaryValueStyle = {
     font: { bold: true },
     alignment: { horizontal: 'right', vertical: 'center' },
-    border: BORDER_THIN,
+    border: createBorder('thin', SECTION_COLORS.pagamento.border),
     fill: { fgColor: { rgb: 'FFFFFF' } }
   }
   const noteLabelStyle = {
     font: { bold: true },
     alignment: { horizontal: 'left', vertical: 'top' },
-    border: BORDER_THIN,
+    border: createBorder('thin', SECTION_COLORS.pagamento.border),
     fill: { fgColor: { rgb: 'F9F9F9' } }
   }
   const signatureLabelStyle = {
     font: { italic: true, color: { rgb: '555555' } },
     alignment: { horizontal: 'center', vertical: 'center' },
-    border: BORDER_THIN,
+    border: createBorder('thin', SECTION_COLORS.pagamento.border),
     fill: { fgColor: { rgb: 'F9F9F9' } }
   }
   const signatureBoxStyle = {
-    border: BORDER_THIN
+    border: createBorder('thin', SECTION_COLORS.pagamento.border)
   }
 
-  function addSectionHeader(text) {
-    mergeAndSet(row, 0, row, columnCount - 1, text, sectionHeaderStyle)
+  function addSectionHeader(text, borderColor = SECTION_FRAME_DEFAULT_COLOR) {
+    const headerStyle = {
+      ...sectionHeaderStyle,
+      border: createBorder('medium', borderColor)
+    }
+    mergeAndSet(row, 0, row, columnCount - 1, text, headerStyle)
     setRowHeight(row, 22)
     row += 1
   }
 
-  function applySectionFrame(startRow, endRow, startCol = 0, endCol = columnCount - 1) {
+  function applySectionFrame(
+    startRow,
+    endRow,
+    startCol = 0,
+    endCol = columnCount - 1,
+    frameColor = SECTION_FRAME_DEFAULT_COLOR
+  ) {
     if (startRow > endRow) {
       return
     }
@@ -201,16 +224,16 @@ function buildCommissionSheet(vendita) {
         const existingBorder = { ...(existingStyle.border || {}) }
 
         if (r === startRow) {
-          existingBorder.top = { style: 'medium', color: { rgb: SECTION_FRAME_COLOR } }
+          existingBorder.top = { style: 'medium', color: { rgb: frameColor } }
         }
         if (r === endRow) {
-          existingBorder.bottom = { style: 'medium', color: { rgb: SECTION_FRAME_COLOR } }
+          existingBorder.bottom = { style: 'medium', color: { rgb: frameColor } }
         }
         if (c === startCol) {
-          existingBorder.left = { style: 'medium', color: { rgb: SECTION_FRAME_COLOR } }
+          existingBorder.left = { style: 'medium', color: { rgb: frameColor } }
         }
         if (c === endCol) {
-          existingBorder.right = { style: 'medium', color: { rgb: SECTION_FRAME_COLOR } }
+          existingBorder.right = { style: 'medium', color: { rgb: frameColor } }
         }
 
         cell.s = { ...existingStyle, border: existingBorder }
@@ -220,17 +243,17 @@ function buildCommissionSheet(vendita) {
 
   function addFieldRow(left, right = null) {
     if (left) {
-      mergeAndSet(row, 0, row, 2, left.label, fieldLabelStyle)
-      mergeAndSet(row, 3, row, 5, left.value, fieldValueStyle)
+      mergeAndSet(row, 0, row, 2, left.label, anagraficaLabelStyle)
+      mergeAndSet(row, 3, row, 5, left.value, anagraficaValueStyle)
     } else {
-      mergeAndSet(row, 0, row, 5, '', fieldValueStyle)
+      mergeAndSet(row, 0, row, 5, '', anagraficaValueStyle)
     }
 
     if (right) {
-      mergeAndSet(row, 6, row, 8, right.label, fieldLabelStyle)
-      mergeAndSet(row, 9, row, 11, right.value, fieldValueStyle)
+      mergeAndSet(row, 6, row, 8, right.label, anagraficaLabelStyle)
+      mergeAndSet(row, 9, row, 11, right.value, anagraficaValueStyle)
     } else {
-      mergeAndSet(row, 6, row, 11, '', fieldValueStyle)
+      mergeAndSet(row, 6, row, 11, '', anagraficaValueStyle)
     }
 
     setRowHeight(row, 20)
@@ -259,7 +282,7 @@ function buildCommissionSheet(vendita) {
   )
 
   const anagraficaSectionStart = row
-  addSectionHeader('DATI COMMISSIONE E CLIENTE')
+  addSectionHeader('DATI COMMISSIONE E CLIENTE', SECTION_COLORS.anagrafica.frame)
 
   const fieldRows = [
     {
@@ -286,7 +309,7 @@ function buildCommissionSheet(vendita) {
 
   fieldRows.forEach(({ left, right }) => addFieldRow(left, right))
 
-  applySectionFrame(anagraficaSectionStart, row - 1)
+  applySectionFrame(anagraficaSectionStart, row - 1, 0, columnCount - 1, SECTION_COLORS.anagrafica.frame)
 
   addEmptyRow(4)
 
@@ -316,7 +339,7 @@ function buildCommissionSheet(vendita) {
   ]
 
   const prodottiSectionStart = row
-  addSectionHeader('DETTAGLIO PRODOTTI E LAVORAZIONI')
+  addSectionHeader('DETTAGLIO PRODOTTI E LAVORAZIONI', SECTION_COLORS.prodotti.frame)
 
   tableColumns.forEach(column => {
     mergeAndSet(row, column.start, row, column.end, column.label, tableHeaderStyle)
@@ -367,12 +390,12 @@ function buildCommissionSheet(vendita) {
     }
   }
 
-  applySectionFrame(prodottiSectionStart, row - 1)
+  applySectionFrame(prodottiSectionStart, row - 1, 0, columnCount - 1, SECTION_COLORS.prodotti.frame)
 
   addEmptyRow(4)
 
   const pagamentoSectionStart = row
-  addSectionHeader('PAGAMENTO, NOTE E FIRME')
+  addSectionHeader('PAGAMENTO, NOTE E FIRME', SECTION_COLORS.pagamento.frame)
 
   mergeAndSet(row, 0, row, 8, 'Quantità complessive', summaryLabelStyle)
   mergeAndSet(row, 9, row, 11, formatNumber(totaleQuantita), summaryValueStyle)
@@ -417,7 +440,7 @@ function buildCommissionSheet(vendita) {
   setRowHeight(row, 36)
   row += 1
 
-  applySectionFrame(pagamentoSectionStart, row - 1)
+  applySectionFrame(pagamentoSectionStart, row - 1, 0, columnCount - 1, SECTION_COLORS.pagamento.frame)
 
   const lastRow = Math.max(row - 1, 0)
   worksheet['!ref'] = XLSX.utils.encode_range({
