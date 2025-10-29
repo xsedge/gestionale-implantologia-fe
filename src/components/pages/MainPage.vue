@@ -6,22 +6,14 @@
         <img src="/logo.png" alt="Logo" class="logo-image" />
       </div>
 
-      <h1 class="text-h4 text-weight-bold text-primary">Modulo Implantologia</h1>
+      <h1 class="text-h4 text-weight-bold text-primary">Gestionale Implantologia</h1>
       <p class="text-subtitle1 text-grey-7">
         Accedi rapidamente a tutte le aree del flusso implantare
       </p>
     </div>
 
     <div class="cards__grid__content">
-      <q-card
-        v-for="card in cards"
-        :key="card.title"
-        clickable
-        flat
-        bordered
-        class="card"
-        @click="goTo(card.route)"
-      >
+      <q-card v-for="card in cards" :key="card.title" clickable flat bordered class="card" @click="goTo(card.route)">
         <q-card-section>
           <div class="card__content">
             <div>
@@ -181,7 +173,7 @@ const cards = [
 .logo-container {
   width: 400px;
   /* container un po' più largo */
-  height: 180px;
+  height: 300px;
   /* container più alto */
   display: inline-block;
 
