@@ -41,8 +41,40 @@
                   emit-value map-options label="Prodotto" dense outlined use-input input-debounce="200"
                   :rules="requiredRule" @filter="(val, update) => filtraProdotti(val, update)" />
                 <q-input v-model.number="riga.quantita" type="number" label="Quantità" dense outlined :rules="requiredNumericRule" />
-                <q-select v-model="riga.listinoId" :options="listiniOptions" option-label="nome" option-value="id"
-                  emit-value map-options label="Listino" dense outlined clearable />
+                <q-select
+                  v-model="riga.listinoId"
+                  :options="riga.listiniDisponibili"
+                  option-label="label"
+                  option-value="id"
+                  emit-value
+                  map-options
+                  label="Listino"
+                  dense
+                  outlined
+                  clearable
+                  :disable="!riga.listiniDisponibili.length"
+                >
+                  <template #option="scope">
+                    <q-item v-bind="scope.itemProps">
+                      <q-item-section>
+                        <q-item-label>{{ scope.opt.nome }}</q-item-label>
+                        <q-item-label caption>
+                          Prezzo: {{ formatCurrency(scope.opt.prezzoApplicato) }}
+                        </q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </template>
+                  <template #selected-item="scope">
+                    <q-item v-bind="scope.itemProps" class="q-pa-none">
+                      <q-item-section>
+                        <q-item-label>{{ scope.opt.nome }}</q-item-label>
+                        <q-item-label caption>
+                          Prezzo: {{ formatCurrency(scope.opt.prezzoApplicato) }}
+                        </q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </template>
+                </q-select>
                 <q-input :model-value="formatCurrency(prezzoUnitario(riga))" label="Prezzo unitario" dense outlined
                   readonly />
                 <div class="implantologia-form-grid__actions">
@@ -116,28 +148,24 @@ watch(
     Object.assign(form, emptyForm(), valore || {})
     form.prodotti = []
     if (Array.isArray(valore?.dettagli)) {
-      form.prodotti = valore.dettagli.map(det => ({
-        prodottoId: det.prodottoId,
-        quantita: det.quantita,
-        listinoId: det.listinoId || null,
-        prezzoUnitario: det.prezzoUnitario,
-        __initialized: true,
-        __lastProdottoId: det.prodottoId,
-        __lastListinoId: det.listinoId || null
-      }))
+      form.prodotti = valore.dettagli.map(det => normalizzaRigaDettaglio(det))
     } else if (Array.isArray(valore?.prodotti)) {
-      form.prodotti = valore.prodotti.map(det => ({
-        prodottoId: det.prodottoId,
-        quantita: det.quantita,
-        listinoId: det.listinoId || null,
-        prezzoUnitario: det.prezzoUnitario || calcolaPrezzo(det.prodottoId),
-        __initialized: false,
-        __lastProdottoId: det.prodottoId,
-        __lastListinoId: det.listinoId || null
-      }))
+      form.prodotti = valore.prodotti.map(det => normalizzaRigaDettaglio(det))
     }
+    form.prodotti.forEach(riga => aggiornaPrezzo(riga, {
+      force: riga.prezzoBase == null,
+      synchronizeListini: !riga.listiniDisponibili?.length
+    }))
   },
   { immediate: true }
+)
+
+watch(
+  () => props.prodottiOptions,
+  () => {
+    form.prodotti.forEach(riga => aggiornaPrezzo(riga, { synchronizeListini: true }))
+  },
+  { deep: true }
 )
 
 const totale = computed(() => form.prodotti.reduce((sum, riga) => sum + rigaTotale(riga), 0))
@@ -162,15 +190,44 @@ function prodottiMap() {
   return map
 }
 
-function calcolaPrezzo(prodottoId) {
-  const prodotto = prodottiMap().get(prodottoId)
-  if (!prodotto) {
-    return 0
+function normalizzaListini(listini = []) {
+  if (!Array.isArray(listini)) {
+    return []
   }
-  if (prodotto.prezzoListinoApplicato != null) {
-    return Number(prodotto.prezzoListinoApplicato) || 0
+  return listini.map(listino => {
+    const id = listino.id ?? listino.listinoId ?? listino.value ?? null
+    const nome = listino.nome ?? listino.label ?? `Listino ${id ?? ''}`.trim()
+    const prezzoApplicato = Number(listino.prezzoApplicato ?? listino.prezzo ?? listino.prezzoUnitario ?? 0) || 0
+    return {
+      ...listino,
+      id,
+      nome,
+      prezzoApplicato,
+      label: `${nome}${nome ? ' · ' : ''}${formatCurrency(prezzoApplicato)}`
+    }
+  }).filter(listino => listino.id != null)
+}
+
+function normalizzaRigaDettaglio(det) {
+  const quantita = Number(det?.quantita) || 0
+  const listiniDisponibili = normalizzaListini(det?.listiniDisponibili)
+  const listinoId = det?.listinoId ?? null
+  const prezzoBase = det?.prezzoBase != null ? Number(det.prezzoBase) : null
+  const prezzoUnitarioDet = det?.prezzoUnitario != null
+    ? Number(det.prezzoUnitario)
+    : det?.totaleRiga != null && quantita
+      ? Number(det.totaleRiga) / quantita
+      : null
+  return {
+    prodottoId: det?.prodottoId ?? null,
+    quantita: quantita || 1,
+    listinoId: listinoId,
+    prezzoBase: prezzoBase,
+    prezzoUnitario: prezzoUnitarioDet ?? 0,
+    listiniDisponibili,
+    __lastProdottoId: det?.prodottoId ?? null,
+    __lastListinoId: listinoId ?? null
   }
-  return Number(prodotto.prezzoBase) || 0
 }
 
 function rigaTotale(riga) {
@@ -178,7 +235,16 @@ function rigaTotale(riga) {
 }
 
 function aggiungiRiga() {
-  form.prodotti.push({ prodottoId: null, quantita: 1, listinoId: null, prezzoUnitario: 0, __initialized: false })
+  form.prodotti.push({
+    prodottoId: null,
+    quantita: 1,
+    listinoId: null,
+    prezzoUnitario: 0,
+    prezzoBase: 0,
+    listiniDisponibili: [],
+    __lastProdottoId: null,
+    __lastListinoId: null
+  })
 }
 
 function rimuoviRiga(index) {
@@ -192,20 +258,60 @@ watch(
   }
 )
 
-function aggiornaPrezzo(riga) {
-  if (!riga || !riga.prodottoId) {
+function aggiornaPrezzo(riga, { force = false, synchronizeListini = false } = {}) {
+  if (!riga) {
+    return
+  }
+  if (!riga.prodottoId) {
     riga.prezzoUnitario = 0
+    riga.prezzoBase = 0
+    riga.listiniDisponibili = []
     riga.__lastProdottoId = null
+    riga.__lastListinoId = null
     return
   }
-  const hasChanged = riga.__lastProdottoId !== riga.prodottoId || riga.__lastListinoId !== riga.listinoId
-  if (!hasChanged && riga.__initialized) {
-    return
+
+  const prodotto = prodottiMap().get(riga.prodottoId)
+  if (prodotto) {
+    const listiniDaProdotto = normalizzaListini(prodotto.listiniDisponibili)
+    if (synchronizeListini || !riga.listiniDisponibili?.length) {
+      riga.listiniDisponibili = listiniDaProdotto
+    }
+    if (riga.prezzoBase == null || force) {
+      riga.prezzoBase = Number(prodotto.prezzoBase) || 0
+    }
   }
-  riga.prezzoUnitario = calcolaPrezzo(riga.prodottoId)
+
+  if (!Array.isArray(riga.listiniDisponibili)) {
+    riga.listiniDisponibili = []
+  }
+
+  const prodottoChanged = riga.__lastProdottoId !== riga.prodottoId
+  if (prodottoChanged) {
+    if (prodotto) {
+      riga.listiniDisponibili = normalizzaListini(prodotto.listiniDisponibili)
+      riga.prezzoBase = Number(prodotto.prezzoBase) || 0
+    } else {
+      riga.listiniDisponibili = []
+      riga.prezzoBase = 0
+    }
+    riga.listinoId = null
+  }
+
+  if (riga.listinoId != null && !riga.listiniDisponibili.some(listino => listino.id === riga.listinoId)) {
+    riga.listinoId = null
+  }
+
+  const selectedListino = riga.listiniDisponibili.find(listino => listino.id === riga.listinoId)
+  const prezzoBaseDisponibile = riga.prezzoBase != null ? Number(riga.prezzoBase) : (prodotto ? Number(prodotto.prezzoBase) : null)
+  const fallbackPrezzo = prezzoBaseDisponibile != null ? prezzoBaseDisponibile : Number(riga.prezzoUnitario) || 0
+  const nuovoPrezzo = selectedListino ? Number(selectedListino.prezzoApplicato) || 0 : fallbackPrezzo
+  riga.prezzoUnitario = nuovoPrezzo
+  if (prezzoBaseDisponibile != null) {
+    riga.prezzoBase = prezzoBaseDisponibile
+  }
   riga.__lastProdottoId = riga.prodottoId
-  riga.__lastListinoId = riga.listinoId || null
-  riga.__initialized = true
+  riga.__lastListinoId = riga.listinoId ?? null
 }
 
 function prezzoUnitario(riga) {

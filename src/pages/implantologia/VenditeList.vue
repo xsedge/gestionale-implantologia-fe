@@ -46,8 +46,18 @@
         >
           <template #body-cell-dettagli="props">
             <q-td :props="props">
-              <div v-for="det in props.row.dettagli" :key="`${props.row.id}-${det.prodottoId}`" class="text-caption">
-                {{ det.quantita }}× {{ det.prodottoNome }} · {{ formatCurrency(det.prezzoUnitario) }}
+              <div
+                v-for="det in props.row.dettagli"
+                :key="`${props.row.id}-${det.prodottoId}-${det.listinoId ?? 'base'}`"
+                class="text-caption q-mb-xs"
+              >
+                <div>{{ det.quantita }}× {{ det.prodottoNome }} · Prezzo: {{ formatCurrency(det.prezzoUnitario ?? det.prezzoBase) }}</div>
+                <div class="text-grey-7">
+                  Totale: {{ formatCurrency(calcolaTotaleRiga(det)) }}
+                  <span v-if="det.listinoId">
+                    · Listino: {{ det.listinoNome || `#${det.listinoId}` }}
+                  </span>
+                </div>
               </div>
               <span v-if="!props.row.dettagli?.length" class="text-grey-6">-</span>
             </q-td>
@@ -60,8 +70,18 @@
           </template>
           <template #mobile-cell-dettagli="{ row }">
             <div class="column items-end">
-              <div v-for="det in row.dettagli" :key="`${row.id}-${det.prodottoId}`" class="text-caption">
-                {{ det.quantita }}× {{ det.prodottoNome }} · {{ formatCurrency(det.prezzoUnitario) }}
+              <div
+                v-for="det in row.dettagli"
+                :key="`${row.id}-${det.prodottoId}-${det.listinoId ?? 'base'}`"
+                class="text-caption text-right"
+              >
+                <div>{{ det.quantita }}× {{ det.prodottoNome }} · Prezzo: {{ formatCurrency(det.prezzoUnitario ?? det.prezzoBase) }}</div>
+                <div class="text-grey-7">
+                  Totale: {{ formatCurrency(calcolaTotaleRiga(det)) }}
+                  <span v-if="det.listinoId">
+                    · Listino: {{ det.listinoNome || `#${det.listinoId}` }}
+                  </span>
+                </div>
               </div>
               <span v-if="!row.dettagli?.length" class="text-grey-6">-</span>
             </div>
@@ -177,6 +197,18 @@ function calcolaTotale(vendita) {
     return 0
   }
   return vendita.dettagli.reduce((sum, det) => sum + (Number(det.totaleRiga) || (Number(det.prezzoUnitario) || 0) * det.quantita), 0)
+}
+
+function calcolaTotaleRiga(det) {
+  if (!det) {
+    return 0
+  }
+  if (det.totaleRiga != null) {
+    return Number(det.totaleRiga) || 0
+  }
+  const quantita = Number(det.quantita) || 0
+  const prezzo = det.prezzoUnitario != null ? Number(det.prezzoUnitario) : det.prezzoBase != null ? Number(det.prezzoBase) : 0
+  return prezzo * quantita
 }
 
 function formatCliente(vendita) {
