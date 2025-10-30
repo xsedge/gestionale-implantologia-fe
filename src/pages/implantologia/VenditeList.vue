@@ -43,6 +43,7 @@
           no-data-label="Nessuna vendita registrata"
           rows-per-page-label="Vendite per pagina"
           :pagination="pagination"
+          @row-click="handleRowClick"
         >
           <template #body-cell-dettagli="props">
             <q-td :props="props">
@@ -64,8 +65,15 @@
           </template>
           <template #body-cell-azioni="props">
             <q-td :props="props">
-              <q-btn dense flat round icon="edit" color="primary" @click="openEdit(props.row)" />
-              <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(props.row)" />
+              <q-btn
+                dense
+                flat
+                label="📄 Esporta Excel"
+                color="primary"
+                @click.stop="esportaVendita(props.row)"
+              />
+              <q-btn dense flat round icon="edit" color="primary" @click.stop="openEdit(props.row)" />
+              <q-btn dense flat round icon="delete" color="negative" @click.stop="handleDelete(props.row)" />
             </q-td>
           </template>
           <template #mobile-cell-dettagli="{ row }">
@@ -88,8 +96,16 @@
           </template>
           <template #mobile-cell-azioni="{ row }">
             <div class="q-gutter-xs">
-              <q-btn dense flat round icon="edit" color="primary" @click="openEdit(row)" />
-              <q-btn dense flat round icon="delete" color="negative" @click="handleDelete(row)" />
+              <q-btn
+                dense
+                flat
+                label="📄 Esporta Excel"
+                color="primary"
+                class="full-width"
+                @click.stop="esportaVendita(row)"
+              />
+              <q-btn dense flat round icon="edit" color="primary" @click.stop="openEdit(row)" />
+              <q-btn dense flat round icon="delete" color="negative" @click.stop="handleDelete(row)" />
             </div>
           </template>
         </ResponsiveTable>
@@ -108,6 +124,7 @@ import { useImplantologiaVenditeStore } from 'src/stores/implantologiaVenditeSto
 import { useImplantologiaClientiStore } from 'src/stores/implantologiaClientiStore.js'
 import { useImplantologiaProdottiStore } from 'src/stores/implantologiaProdottiStore.js'
 import { useImplantologiaListiniStore } from 'src/stores/implantologiaListiniStore.js'
+import { exportVenditaExcel } from 'src/utils/implantologia/exportVenditaExcel.js'
 import ModaleVendita from 'src/components/implantologia/ModaleVendita.vue'
 import ResponsiveTable from 'src/components/ResponsiveTable.vue'
 
@@ -182,6 +199,10 @@ onMounted(async () => {
   ])
 })
 
+function handleRowClick(_, row) {
+  esportaVendita(row)
+}
+
 function formatDate(value) {
   if (!value) return '-'
   return new Intl.DateTimeFormat('it-IT').format(new Date(value))
@@ -228,6 +249,27 @@ function openCreate() {
 function openEdit(item) {
   modal.item = { ...item }
   modal.visible = true
+}
+
+function esportaVendita(vendita) {
+  if (!vendita) {
+    return
+  }
+
+  try {
+    const fileName = exportVenditaExcel(vendita)
+    $q.notify({
+      type: 'positive',
+      message: 'Esportazione completata',
+      caption: fileName
+    })
+  } catch (error) {
+    console.error(error)
+    $q.notify({
+      type: 'negative',
+      message: 'Errore durante l\'esportazione della vendita'
+    })
+  }
 }
 
 async function handleSave(payload) {
